@@ -1,0 +1,9 @@
+{
+  "rds_host": "finalproject.cvfdrw5olghe.us-east-2.rds.amazonaws.com",
+  "rds_port": "3306",
+  "rds_user": "austinw1995",
+  "rds_password": "twins111",
+  "rds_db": "FINAL_PROJECT",
+  "server_host": "localhost",
+  "server_port": "8080"
+}
