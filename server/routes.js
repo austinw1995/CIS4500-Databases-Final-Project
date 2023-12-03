@@ -14,9 +14,11 @@ connection.connect((err) => err && console.log(err));
 
 const stock = async function(req, res) {
   // Selecting the stock price over time of multiple companies over a specified period of time.
-  connection.query(`  SELECT date, name, close
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  connection.query(`SELECT date, name, close
   FROM Stocks_Cor
-  WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2013-02-08' AND '2018-02-07'
+  WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
   ORDER BY date ASC, name
   LIMIT 10`,
    (err, data) => {
