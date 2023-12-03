@@ -179,7 +179,7 @@ Complex Query 9 (Longer than 15s):
 Query to get the beta of selected stocks with respect to a chosen index.
 
 
-ITH SELECTED_STOCKS AS (
+WITH SELECTED_STOCKS AS (
    SELECT name, date, close
    FROM Stocks_Cor
    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2014-02-07' AND '2018-02-07'
@@ -360,3 +360,104 @@ SELECT name, 100 - (100 / (1 + avg_gain / avg_loss)) AS rsi
 FROM AVG_GAINS_LOSSES
 WHERE avg_loss <> 0
 ORDER BY rsi;
+
+
+
+Complex Query 15 (runtime > 15s):
+Query to calculate Bollinger Bands for selected stocks, indicating potential overbought/oversold conditions.
+By identifying instances where the stock prices are closest to the upper/lower bands, it helps highlight periods of heightened vol and potential trend reversal
+
+StockPriceChanges AS (
+    SELECT
+        S1.name,
+        S1.date,
+        (S1.close - S2.close) AS price_change
+    FROM
+        SELECTED_STOCKS S1
+    JOIN
+        SELECTED_STOCKS S2 ON S1.name = S2.name AND S2.date = (SELECT MAX(date) FROM SELECTED_STOCKS WHERE date < S1.date)
+    ORDER BY
+        S1.date, S1.name
+),
+BollingerBands AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
+        2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
+        -2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band,
+        price_change,
+        ABS(price_change - 2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW)) AS upper_band_distance,
+        ABS(price_change + 2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW)) AS lower_band_distance
+    FROM
+        StockPriceChanges
+)
+, RankedBollingerBands AS (
+    SELECT
+        name,
+        date,
+        moving_avg,
+        upper_band,
+        lower_band,
+        price_change,
+        ROW_NUMBER() OVER (PARTITION BY name ORDER BY upper_band_distance) AS upper_band_rank,
+        ROW_NUMBER() OVER (PARTITION BY name ORDER BY lower_band_distance) AS lower_band_rank
+    FROM
+        BollingerBands
+)
+SELECT
+    name,
+    date,
+    moving_avg,
+    upper_band,
+    lower_band,
+    price_change
+FROM
+    RankedBollingerBands
+WHERE
+    upper_band_rank <= 5 OR lower_band_rank <= 5
+ORDER BY
+    name, date;
+
+
+Complex Query 16 (runtime > 15s):
+Query to calculate the Moving Average Convergence Divergence (MACD) for the selected stocks
+
+WITH SELECTED_STOCKS AS (
+    SELECT name, date, close
+    FROM Stocks_Cor
+    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+StockPriceChanges AS (
+    SELECT
+        S1.name,
+        S1.date,
+        (S1.close - S2.close) AS price_change
+    FROM
+        SELECTED_STOCKS S1
+    JOIN
+        SELECTED_STOCKS S2 ON S1.name = S2.name AND S2.date = (SELECT MAX(date) FROM SELECTED_STOCKS WHERE date < S1.date)
+    ORDER BY
+        S1.date, S1.name
+),
+MACDValues AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS twelve_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 26 PRECEDING AND CURRENT ROW) AS twenty_six_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS macd_line
+    FROM
+        StockPriceChanges
+)
+SELECT
+    name,
+    date,
+    twelve_days_ema,
+    twenty_six_days_ema,
+    macd_line,
+    twelve_days_ema - twenty_six_days_ema AS macd_histogram
+FROM
+    MACDValues
+ORDER BY
+    name, date;
