@@ -433,6 +433,98 @@ const rel_strength = async function(req, res) {
   });
 }
 
+
+const bol_bands = async function(req, res) {
+  //Calculates the relative strength index of selected stocks, and ranks them in descending order
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  connection.query(`WITH StockPriceChanges AS (
+    SELECT
+        name,
+        date,
+        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+    FROM
+        Stocks_Cor
+    WHERE
+        name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
+        AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+BollingerBands AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
+        2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
+        -2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band
+    FROM
+        StockPriceChanges
+)
+SELECT
+    name,
+    date,
+    moving_avg,
+    upper_band,
+    lower_band
+FROM
+    BollingerBands
+ORDER BY
+    name, date;`,
+   (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
+}
+
+const macd = async function(req, res) {
+  //Calculates the relative strength index of selected stocks, and ranks them in descending order
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  connection.query(`WITH StockPriceChanges AS (
+    SELECT
+        name,
+        date,
+        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+    FROM
+        Stocks_Cor
+    WHERE
+        name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
+        AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+MACDValues AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS twelve_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 26 PRECEDING AND CURRENT ROW) AS twenty_six_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date) AS macd_line
+    FROM
+        StockPriceChanges
+)
+SELECT
+    name,
+    date,
+    twelve_days_ema,
+    twenty_six_days_ema,
+    macd_line,
+    twelve_days_ema - twenty_six_days_ema AS macd_histogram
+FROM
+    MACDValues
+ORDER BY
+    name, date;`,
+   (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
+}
+
 module.exports = {
   stock,
   top_market_cap,
@@ -447,4 +539,6 @@ module.exports = {
   stock_index_comparison,
   index_vs_stock_mean_comp,
   rel_strength,
+  bol_bands,
+  macd,
 }
