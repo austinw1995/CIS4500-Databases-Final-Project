@@ -174,9 +174,12 @@ const top_vol = async function(req, res) {
 
 const index_closing = async function(req, res) {
   //View the prices of multiple selected indices over a specified period of time (time series of index prices).
+  //  WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI')
+  let indexes = req.params.indexes;
+  const indexArray = indexes.split(',');
   connection.query(`SELECT date, marketIndex, closeUSD
   FROM Markets_Cor2
-  WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI') AND date BETWEEN '1986-12-31' AND '2021-05-31'
+  WHERE marketIndex IN (${indexArray.map(ind => `'${ind}'`).join(',')}) AND date BETWEEN '1986-12-31' AND '2021-05-31'
   ORDER BY date, marketIndex`,
    (err, data) => {
     if (err || data.length === 0) {
@@ -191,10 +194,13 @@ const index_closing = async function(req, res) {
 
 const exp_returns = async function(req, res) {
   //Query to determine cumulative expected returns based on a trailing 1 year period for selected stocks.
+  //companies=AMD,NWL
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
   connection.query(`WITH SelectedStocks AS (
     SELECT *
     FROM Stocks_Cor
-    WHERE name IN ('AMD', 'NWL')
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
  ),
  DailyReturns AS (
     SELECT
@@ -226,10 +232,14 @@ const exp_returns = async function(req, res) {
 
 const beta = async function(req, res) {
   //Query to get the beta of selected stocks with respect to a chosen index.
+  //AAPL,GOOGL,MSFT & NYA
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  let index = req.params.index;
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT name, date, close
     FROM Stocks_Cor
-    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2014-02-07' AND '2018-02-07'
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2014-02-07' AND '2018-02-07'
  ),
  STOCK_DAILY_RETURNS AS (
     SELECT
@@ -255,7 +265,7 @@ const beta = async function(req, res) {
  SELECTED_MKT AS (
     SELECT date, closeUSD AS close
     FROM Markets_Cor2
-    WHERE marketIndex = 'NYA' AND date BETWEEN '2014-02-07' AND '2018-02-07'
+    WHERE marketIndex = '${index}' AND date BETWEEN '2014-02-07' AND '2018-02-07'
  ),
  INDEX_DAILY_RETURNS AS (
     SELECT
@@ -299,17 +309,20 @@ const beta = async function(req, res) {
 
 const stock_index_corr = async function(req, res) {
   //Calculates correlation between the average price of multiple stocks (can also just be one stock) and a selected index.
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  let index = req.params.index;
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT date, AVG(close) AS close
     FROM Stocks_Cor
-    WHERE name IN ('AAPL', 'GOOGL', 'MSFT')
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
     GROUP BY date
     ORDER BY date ASC
  ),
  StockAndIndex AS (
     SELECT S.date, S.close AS stock_price, I.closeUSD AS index_price
     FROM SELECTED_STOCKS S JOIN Markets_Cor2 I ON S.date = I.date
-    WHERE I.marketIndex = 'NYA'
+    WHERE I.marketIndex = '${index}'
  ),
  Averages AS (
     SELECT
@@ -333,16 +346,21 @@ const stock_index_corr = async function(req, res) {
 
 const stock_index_comparison = async function(req, res) {
   //Compare and contrast the performance of selected S&P 500 stocks with selected indices
+  //HSI', 'NYA', 'N100', 'NSEI
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  let inds = req.params.indexes;
+  const indsArray = inds.split(',');
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT date, name, close
     FROM Stocks_Cor
-    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
     ORDER BY date ASC, name
  ),
  SELECTED_INX AS (
     SELECT date, marketIndex, closeUSD
     FROM Markets_Cor2
-    WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI') AND date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE marketIndex IN (${indsArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
     ORDER BY date, marketIndex
  )
  SELECT date, name AS ticker, close AS close
