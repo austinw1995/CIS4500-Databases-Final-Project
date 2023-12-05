@@ -14,9 +14,11 @@ connection.connect((err) => err && console.log(err));
 
 const stock = async function(req, res) {
   // Selecting the stock price over time of multiple companies over a specified period of time.
-  connection.query(`  SELECT date, name, close
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  connection.query(`SELECT date, name, close
   FROM Stocks_Cor
-  WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2013-02-08' AND '2018-02-07'
+  WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
   ORDER BY date ASC, name
   LIMIT 10`,
    (err, data) => {
@@ -172,9 +174,12 @@ const top_vol = async function(req, res) {
 
 const index_closing = async function(req, res) {
   //View the prices of multiple selected indices over a specified period of time (time series of index prices).
+  //  WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI')
+  let indexes = req.params.indexes;
+  const indexArray = indexes.split(',');
   connection.query(`SELECT date, marketIndex, closeUSD
   FROM Markets_Cor2
-  WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI') AND date BETWEEN '1986-12-31' AND '2021-05-31'
+  WHERE marketIndex IN (${indexArray.map(ind => `'${ind}'`).join(',')}) AND date BETWEEN '1986-12-31' AND '2021-05-31'
   ORDER BY date, marketIndex`,
    (err, data) => {
     if (err || data.length === 0) {
@@ -189,10 +194,13 @@ const index_closing = async function(req, res) {
 
 const exp_returns = async function(req, res) {
   //Query to determine cumulative expected returns based on a trailing 1 year period for selected stocks.
+  //companies=AMD,NWL
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
   connection.query(`WITH SelectedStocks AS (
     SELECT *
     FROM Stocks_Cor
-    WHERE name IN ('AMD', 'NWL')
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
  ),
  DailyReturns AS (
     SELECT
@@ -224,66 +232,47 @@ const exp_returns = async function(req, res) {
 
 const beta = async function(req, res) {
   //Query to get the beta of selected stocks with respect to a chosen index.
-  connection.query(`WITH SELECTED_STOCKS AS (
-    SELECT name, date, close
-    FROM Stocks_Cor
-    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2014-02-07' AND '2018-02-07'
- ),
- STOCK_DAILY_RETURNS AS (
+  //AAPL,GOOGL,MSFT & NYA
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  let index = req.params.index;
+  connection.query(`WITH StockReturns AS (
     SELECT
-        S1.name,
-        S1.date,
-        (S1.close - S2.close) / S2.close AS daily_return
+        s.name,
+        s.date,
+        (s.close - lag(s.close) OVER (PARTITION BY s.name ORDER BY s.date)) / lag(s.close) OVER (PARTITION BY s.name ORDER BY s.date) AS daily_return
     FROM
-        SELECTED_STOCKS S1
-    JOIN
-        SELECTED_STOCKS S2 ON S1.name = S2.name AND S2.date = (SELECT MAX(date) FROM SELECTED_STOCKS WHERE date < S1.date)
-    ORDER BY
-        S1.date, S1.name
- ),
- AVG_STOCK_RETURNS AS (
+        Stocks_Cor s
+    WHERE
+        s.name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
+        AND s.date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+MarketReturns AS (
     SELECT
-        name,
-        AVG(daily_return) AS avg_stock_return
+        m.date,
+        (m.closeUSD - lag(m.closeUSD) OVER (ORDER BY m.date)) / lag(m.closeUSD) OVER (ORDER BY m.date) AS daily_return
     FROM
-        STOCK_DAILY_RETURNS
-    GROUP BY
-        name
- ),
- SELECTED_MKT AS (
-    SELECT date, closeUSD AS close
-    FROM Markets_Cor2
-    WHERE marketIndex = 'NYA' AND date BETWEEN '2014-02-07' AND '2018-02-07'
- ),
- INDEX_DAILY_RETURNS AS (
-    SELECT
-        I1.date,
-        (I1.close - I2.close) / I2.close AS daily_return
-    FROM
-        SELECTED_MKT I1
-    JOIN
-        SELECTED_MKT I2 ON I2.date = (SELECT MAX(date) FROM SELECTED_MKT WHERE date < I1.date)
-    ORDER BY
-        I1.date
- ),
- AVG_INX_RETURNS AS (
-    SELECT AVG(daily_return) AS avg_inx_ret
-    FROM INDEX_DAILY_RETURNS
- )
- SELECT
-    SDR.name,
-    ASR.avg_stock_return AS avg_stock_return,
-    IDR.daily_return AS avg_index_return,
-    (SUM((SDR.daily_return - ASR.avg_stock_return) * (IDR.daily_return - (SELECT avg_inx_ret FROM AVG_INX_RETURNS))) / (COUNT(*) - 1)) /
-    SUM(POW(IDR.daily_return - (SELECT avg_inx_ret FROM AVG_INX_RETURNS), 2)) / (COUNT(*) - 1) AS beta
- FROM
-    STOCK_DAILY_RETURNS SDR
- JOIN
-    AVG_STOCK_RETURNS ASR ON SDR.name = ASR.name
- JOIN
-    INDEX_DAILY_RETURNS IDR ON SDR.date = IDR.date
- GROUP BY
-    SDR.name`,
+        Markets_Cor2 m
+    WHERE
+        m.marketIndex = '${index}'
+        AND m.date BETWEEN '2014-02-07' AND '2018-02-07'
+)
+SELECT
+    sr.name,
+    AVG(sr.daily_return) AS avg_stock_return,
+    AVG(mr.daily_return) AS avg_market_return,
+    (
+        SUM(sr.daily_return * mr.daily_return) -
+        SUM(mr.daily_return) * SUM(sr.daily_return) / COUNT(*)
+    ) / (
+        SUM(POWER(mr.daily_return, 2)) - POWER(SUM(mr.daily_return), 2) / COUNT(*)
+    ) AS beta
+FROM
+    StockReturns sr
+JOIN
+    MarketReturns mr ON sr.date = mr.date
+GROUP BY
+    sr.name;`,
    (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -297,17 +286,20 @@ const beta = async function(req, res) {
 
 const stock_index_corr = async function(req, res) {
   //Calculates correlation between the average price of multiple stocks (can also just be one stock) and a selected index.
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  let index = req.params.index;
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT date, AVG(close) AS close
     FROM Stocks_Cor
-    WHERE name IN ('AAPL', 'GOOGL', 'MSFT')
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
     GROUP BY date
     ORDER BY date ASC
  ),
  StockAndIndex AS (
     SELECT S.date, S.close AS stock_price, I.closeUSD AS index_price
     FROM SELECTED_STOCKS S JOIN Markets_Cor2 I ON S.date = I.date
-    WHERE I.marketIndex = 'NYA'
+    WHERE I.marketIndex = '${index}'
  ),
  Averages AS (
     SELECT
@@ -331,16 +323,21 @@ const stock_index_corr = async function(req, res) {
 
 const stock_index_comparison = async function(req, res) {
   //Compare and contrast the performance of selected S&P 500 stocks with selected indices
+  //HSI', 'NYA', 'N100', 'NSEI
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  let inds = req.params.indexes;
+  const indsArray = inds.split(',');
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT date, name, close
     FROM Stocks_Cor
-    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
     ORDER BY date ASC, name
  ),
  SELECTED_INX AS (
     SELECT date, marketIndex, closeUSD
     FROM Markets_Cor2
-    WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI') AND date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE marketIndex IN (${indsArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
     ORDER BY date, marketIndex
  )
  SELECT date, name AS ticker, close AS close
@@ -363,17 +360,21 @@ const stock_index_comparison = async function(req, res) {
 const index_vs_stock_mean_comp = async function(req, res) {
   //Query to take the mean of selected stocks and compare with selected indices 
   //to see how a batch of stocks have performed in comparison to the overall market performance of particular markets.
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  let inds = req.params.indexes;
+  const indsArray = inds.split(',');
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT date, 'SELECTED_STOCKS', AVG(close) AS close
  FROM Stocks_Cor
- WHERE name IN ('AAPL', 'GOOGL', 'MSFT')
+ WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
  GROUP BY date
  ORDER BY date ASC
  ),
  SELECTED_INX AS (
     SELECT date, marketIndex, closeUSD
     FROM Markets_Cor2
-    WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI') AND date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE marketIndex IN (${indsArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
     ORDER BY date, marketIndex
  )
  SELECT date, 'SELECTED_STOCKS' AS ticker, close AS close
@@ -394,10 +395,12 @@ const index_vs_stock_mean_comp = async function(req, res) {
 
 const rel_strength = async function(req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT name, date, close
     FROM Stocks_Cor
-    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2014-02-07' AND '2018-02-07'
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2014-02-07' AND '2018-02-07'
   ),
   STOCK_PRICE_CHANGES AS (
      SELECT
@@ -430,6 +433,98 @@ const rel_strength = async function(req, res) {
   });
 }
 
+
+const bol_bands = async function(req, res) {
+  //Calculates the relative strength index of selected stocks, and ranks them in descending order
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  connection.query(`WITH StockPriceChanges AS (
+    SELECT
+        name,
+        date,
+        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+    FROM
+        Stocks_Cor
+    WHERE
+        name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
+        AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+BollingerBands AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
+        2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
+        -2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band
+    FROM
+        StockPriceChanges
+)
+SELECT
+    name,
+    date,
+    moving_avg,
+    upper_band,
+    lower_band
+FROM
+    BollingerBands
+ORDER BY
+    name, date;`,
+   (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
+}
+
+const macd = async function(req, res) {
+  //Calculates the relative strength index of selected stocks, and ranks them in descending order
+  let companies = req.params.stocks;
+  const companiesArray = companies.split(',');
+  connection.query(`WITH StockPriceChanges AS (
+    SELECT
+        name,
+        date,
+        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+    FROM
+        Stocks_Cor
+    WHERE
+        name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
+        AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+MACDValues AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS twelve_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 26 PRECEDING AND CURRENT ROW) AS twenty_six_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date) AS macd_line
+    FROM
+        StockPriceChanges
+)
+SELECT
+    name,
+    date,
+    twelve_days_ema,
+    twenty_six_days_ema,
+    macd_line,
+    twelve_days_ema - twenty_six_days_ema AS macd_histogram
+FROM
+    MACDValues
+ORDER BY
+    name, date;`,
+   (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
+}
+
 module.exports = {
   stock,
   top_market_cap,
@@ -444,4 +539,6 @@ module.exports = {
   stock_index_comparison,
   index_vs_stock_mean_comp,
   rel_strength,
+  bol_bands,
+  macd,
 }

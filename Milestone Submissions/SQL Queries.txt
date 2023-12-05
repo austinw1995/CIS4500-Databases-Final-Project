@@ -241,6 +241,47 @@ GROUP BY
    SDR.name;
 
 
+Complex Query 9 updated version:
+
+WITH StockReturns AS (
+    SELECT
+        s.name,
+        s.date,
+        (s.close - lag(s.close) OVER (PARTITION BY s.name ORDER BY s.date)) / lag(s.close) OVER (PARTITION BY s.name ORDER BY s.date) AS daily_return
+    FROM
+        Stocks_Cor s
+    WHERE
+        s.name IN ('AAPL', 'GOOGL', 'MSFT')
+        AND s.date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+MarketReturns AS (
+    SELECT
+        m.date,
+        (m.closeUSD - lag(m.closeUSD) OVER (ORDER BY m.date)) / lag(m.closeUSD) OVER (ORDER BY m.date) AS daily_return
+    FROM
+        Markets_Cor2 m
+    WHERE
+        m.marketIndex = 'NYA'
+        AND m.date BETWEEN '2014-02-07' AND '2018-02-07'
+)
+SELECT
+    sr.name,
+    AVG(sr.daily_return) AS avg_stock_return,
+    AVG(mr.daily_return) AS avg_market_return,
+    (
+        SUM(sr.daily_return * mr.daily_return) -
+        SUM(mr.daily_return) * SUM(sr.daily_return) / COUNT(*)
+    ) / (
+        SUM(POWER(mr.daily_return, 2)) - POWER(SUM(mr.daily_return), 2) / COUNT(*)
+    ) AS beta
+FROM
+    StockReturns sr
+JOIN
+    MarketReturns mr ON sr.date = mr.date
+GROUP BY
+    sr.name;
+
+
 Complex Query 10:
 Calculates correlation between the average price of multiple stocks (can also just be one stock) and a selected index.
 
@@ -420,6 +461,41 @@ ORDER BY
     name, date;
 
 
+Complex Query 15 Optimized Version:
+WITH StockPriceChanges AS (
+    SELECT
+        name,
+        date,
+        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+    FROM
+        Stocks_Cor
+    WHERE
+        name IN ('AAPL', 'GOOGL', 'MSFT')
+        AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+BollingerBands AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
+        2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
+        -2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band
+    FROM
+        StockPriceChanges
+)
+SELECT
+    name,
+    date,
+    moving_avg,
+    upper_band,
+    lower_band
+FROM
+    BollingerBands
+ORDER BY
+    name, date;
+
+
+
 Complex Query 16 (runtime > 15s):
 Query to calculate the Moving Average Convergence Divergence (MACD) for the selected stocks
 
@@ -447,6 +523,42 @@ MACDValues AS (
         AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS twelve_days_ema,
         AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 26 PRECEDING AND CURRENT ROW) AS twenty_six_days_ema,
         AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS macd_line
+    FROM
+        StockPriceChanges
+)
+SELECT
+    name,
+    date,
+    twelve_days_ema,
+    twenty_six_days_ema,
+    macd_line,
+    twelve_days_ema - twenty_six_days_ema AS macd_histogram
+FROM
+    MACDValues
+ORDER BY
+    name, date;
+
+
+Complex Query 16 optimized version: 
+
+WITH StockPriceChanges AS (
+    SELECT
+        name,
+        date,
+        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+    FROM
+        Stocks_Cor
+    WHERE
+        name IN ('AAPL', 'GOOGL', 'MSFT')
+        AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
+MACDValues AS (
+    SELECT
+        name,
+        date,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS twelve_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 26 PRECEDING AND CURRENT ROW) AS twenty_six_days_ema,
+        AVG(price_change) OVER (PARTITION BY name ORDER BY date) AS macd_line
     FROM
         StockPriceChanges
 )
