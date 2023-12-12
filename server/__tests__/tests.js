@@ -3,149 +3,220 @@ const supertest = require('supertest');
 const app = require('../server');
 const results = require("./results.json")
 
-test('GET /author/name', async () => {
-  await supertest(app).get('/author/name')
+test('GET /stock/AAPL', async () => {
+  await supertest(app).get('/stock/AAPL')
     .expect(200)
     .then((res) => {
-      expect(res.text).toMatch(/(?!.* John Doe$)^Created by .*$/);
+      expect(res.body).toStrictEqual(results.stock)
     });
 });
 
-test('GET /author/pennkey', async () => {
-  await supertest(app).get('/author/pennkey')
+test('GET /stock/AAPL', async () => {
+  await supertest(app).get('/stock/AAPL')
     .expect(200)
     .then((res) => {
-      expect(res.text).toMatch(/(?!.* jdoe$)^Created by .*$/);
+      expect(res.body).toStrictEqual(results.stock)
     });
 });
 
-test('GET /random', async () => {
-  await supertest(app).get('/random')
+test('GET /market_cap', async () => {
+  await supertest(app).get('/market_cap')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual({
-        song_id: expect.any(String),
-        title: expect.any(String),
-      });
+      expect(res.body).toStrictEqual(results.market_cap)
     });
 });
 
-test('GET /song/0kN3oXYWWAk1uC0y2WoyOE', async () => {
-  await supertest(app).get('/song/0kN3oXYWWAk1uC0y2WoyOE')
+test('GET /pos_pct_change', async () => {
+  await supertest(app).get('/pos_pct_change')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.song)
+      expect(res.body).toStrictEqual(results.pos_pct_change)
     });
 });
 
-test('GET /album/3lS1y25WAhcqJDATJK70Mq', async () => {
-  await supertest(app).get('/album/3lS1y25WAhcqJDATJK70Mq')
+test('GET /neg_pct_change', async () => {
+  await supertest(app).get('/neg_pct_change')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.album)
+      expect(res.body).toStrictEqual(results.neg_pct_change)
     });
 });
 
-test('GET /albums', async () => {
-  await supertest(app).get('/albums')
+test('GET /index_closing', async () => {
+  await supertest(app).get('/index_closing/NYA')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.albums)
+      const expectedResult = {"date":"1986-12-31T05:00:00.000Z","marketIndex":"NYA","closeUSD":1465.310059};
+
+      // Assuming the response body is an array of objects
+      const resultArray = res.body;
+
+      // Check if the resultArray includes the expected result
+      const includesExpectedResult = resultArray.some(item => (
+        item.date === expectedResult.date &&
+        item.marketIndex === expectedResult.marketIndex &&
+        item.closeUSD === expectedResult.closeUSD
+      ));
+
+      expect(includesExpectedResult).toBe(true);
     });
 });
 
-test('GET /album_songs/6AORtDjduMM3bupSWzbTSG', async () => {
-  await supertest(app).get('/album_songs/6AORtDjduMM3bupSWzbTSG')
+test('GET /single_day_pct', async () => {
+  await supertest(app).get('/single_day_pct')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.album_songs)
+      expect(res.body).toStrictEqual(results.single_day_pct)
     });
 });
 
-test('GET /top_songs all', async () => {
-  await supertest(app).get('/top_songs')
+test('GET /vol', async () => {
+  await supertest(app).get('/vol')
     .expect(200)
     .then((res) => {
-      expect(res.body.length).toEqual(238)
-      expect(res.body[22]).toStrictEqual(results.top_songs_all_22)
+      expect(res.body).toStrictEqual(results.vol)
     });
 });
 
-test('GET /top_songs page 3', async () => {
-  await supertest(app).get('/top_songs?page=3')
+test('GET /beta', async () => {
+  await supertest(app).get('/beta/AAPL/NYA')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_songs_page_3)
+      expect(res.body).toStrictEqual(results.beta)
     });
 });
 
-test('GET /top_songs page 5 page_size 3', async () => {
-  await supertest(app).get('/top_songs?page=5&page_size=3')
+
+test('GET /stock_index_corr', async () => {
+  await supertest(app).get('/stock_index_corr/AAPL/NYA')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_songs_page_5_page_size_3)
+      expect(res.body).toStrictEqual(results.stock_index_corr)
     });
 });
 
-test('GET /top_albums all', async () => {
-  await supertest(app).get('/top_albums')
+
+
+test('GET /bol_bands', async () => {
+  await supertest(app).get('/bol_bands/AAPL')
     .expect(200)
     .then((res) => {
-      expect(res.body.length).toEqual(12)
-      expect(res.body[7]).toStrictEqual(results.top_albums_all_7)
+      const expectedResult = {"name":"AAPL","date":"2014-02-07T05:00:00.000Z","moving_avg":null,"upper_band":null,"lower_band":null};
+
+      // Assuming the response body is an array of objects
+      const resultArray = res.body;
+
+      // Check if the resultArray includes the expected result
+      const includesExpectedResult = resultArray.some(item => (
+        item.date === expectedResult.date &&
+        item.name === expectedResult.name
+      ));
+
+      expect(includesExpectedResult).toBe(true);
     });
 });
 
-test('GET /top_albums page 2', async () => {
-  await supertest(app).get('/top_albums?page=2')
+test('GET /macd', async () => {
+  await supertest(app).get('/macd/AAPL')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_albums_page_2)
+      const expectedResult = {"name":"AAPL","date":"2014-02-07T05:00:00.000Z","twelve_days_ema":null,"twenty_six_days_ema":null,"macd_line":null,"macd_histogram":null};
+
+      // Assuming the response body is an array of objects
+      const resultArray = res.body;
+
+      // Check if the resultArray includes the expected result
+      const includesExpectedResult = resultArray.some(item => (
+        item.date === expectedResult.date &&
+        item.name === expectedResult.name
+      ));
+
+      expect(includesExpectedResult).toBe(true);
     });
 });
 
-test('GET /top_albums page 5 page_size 1', async () => {
-  await supertest(app).get('/top_albums?page=5&page_size=1')
+test('GET /rel_strength', async () => {
+  await supertest(app).get('/rel_strength/AAPL')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.top_albums_page_5_page_size_1)
+      expect(res.body).toStrictEqual(results.rel_strength)
     });
 });
 
-test('GET /search_songs default', async () => {
-  await supertest(app).get('/search_songs')
+test('GET /stock_index_mean_comp', async () => {
+  await supertest(app).get('/stock_index_mean_comp/AAPL/NYA')
     .expect(200)
     .then((res) => {
-      expect(res.body.length).toEqual(219)
-      expect(res.body[0]).toStrictEqual({
-        song_id: expect.any(String),
-        album_id: expect.any(String),
-        title: expect.any(String),
-        number: expect.any(Number),
-        duration: expect.any(Number),
-        plays: expect.any(Number),
-        danceability: expect.any(Number),
-        energy: expect.any(Number),
-        valence: expect.any(Number),
-        tempo: expect.any(Number),
-        key_mode: expect.any(String),
-        explicit: expect.any(Number),
-      });
+      const expectedResult = {"avg_daily_stock_return":0.00078619669118,"avg_daily_index_return":0.00030822206399};
+
+      // Assuming the response body is an array of objects
+      const resultArray = res.body;
+
+      // Check if the resultArray includes the expected result
+      const includesExpectedResult = resultArray.some(item => (
+        item.date === expectedResult.date &&
+        item.marketIndex === expectedResult.marketIndex &&
+        item.closeUSD === expectedResult.closeUSD
+      ));
+
+      expect(includesExpectedResult).toBe(true);
     });
 });
 
-test('GET /search_songs filtered', async () => {
-  await supertest(app).get('/search_songs?title=all&explicit=true&energy_low=0.5&valence_low=0.2&valence_high=0.8')
+test('GET /stock_index_comparison', async () => {
+  await supertest(app).get('/stock_index_comparison/AAPL/NYA')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual(results.search_songs_filtered)
+      const expectedResult = {"date":"2013-02-11T05:00:00.000Z","stock_ticker":"AAPL","stock_return":0.0104223467,"index_ticker":"NYA","index_return":-0.0018142719};
+
+      // Assuming the response body is an array of objects
+      const resultArray = res.body;
+
+      // Check if the resultArray includes the expected result
+      const includesExpectedResult = resultArray.some(item => (
+        item.date === expectedResult.date &&
+        item.marketIndex === expectedResult.marketIndex &&
+        item.closeUSD === expectedResult.closeUSD
+      ));
+
+      expect(includesExpectedResult).toBe(true);
     });
 });
 
-test('GET /search_songs null', async () => {
-  await supertest(app).get('/search_songs?title=junk_data')
+test('GET /exp_returns', async () => {
+  await supertest(app).get('/exp_returns/AAPL,GOOGL')
     .expect(200)
     .then((res) => {
-      expect(res.body).toStrictEqual([])
+      expect(res.body).toStrictEqual(results.exp_returns)
+    });
+});
+
+
+test('GET /stock null', async () => {
+  await supertest(app)
+    .get('/stock/acb')
+    .expect(200)
+    .then((res) => {
+      // Assert that the response body includes an error message
+      expect(res.body).toStrictEqual({})
+    });
+});
+
+test('GET /exp_returns null', async () => {
+  await supertest(app)
+    .get('/exp_returns/acb')
+    .expect(200)
+    .then((res) => {
+      // Assert that the response body includes an error message
+      expect(res.body).toStrictEqual({})
+    });
+});
+
+test('GET /beta null', async () => {
+  await supertest(app).get('/beta/acb/acb')
+    .expect(200)
+    .then((res) => {
+      expect(res.body).toStrictEqual({})
     });
 });
