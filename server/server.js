@@ -8,8 +8,6 @@ app.use(cors({
   origin: '*',
 }));
 
-// We use express to define our various API endpoints and
-// provide their handlers that we implemented in routes.js
 app.get('/stock/:stocks', routes.stock);
 app.get('/market_cap', routes.top_market_cap);
 app.get('/pos_pct_change', routes.top_pos_pct_change);

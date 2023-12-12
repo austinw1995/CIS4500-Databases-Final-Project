@@ -411,5 +411,15 @@
       "key_mode": "D major",
       "explicit": 0
     }
-  ]
+  ],
+  "stock": [{"date":"2013-02-08T05:00:00.000Z","name":"AAPL","close":67.8542},{"date":"2013-02-11T05:00:00.000Z","name":"AAPL","close":68.5614},{"date":"2013-02-12T05:00:00.000Z","name":"AAPL","close":66.8428},{"date":"2013-02-13T05:00:00.000Z","name":"AAPL","close":66.7156},{"date":"2013-02-14T05:00:00.000Z","name":"AAPL","close":66.6556},{"date":"2013-02-15T05:00:00.000Z","name":"AAPL","close":65.7371},{"date":"2013-02-19T05:00:00.000Z","name":"AAPL","close":65.7128},{"date":"2013-02-20T05:00:00.000Z","name":"AAPL","close":64.1214},{"date":"2013-02-21T05:00:00.000Z","name":"AAPL","close":63.7228},{"date":"2013-02-22T05:00:00.000Z","name":"AAPL","close":64.4014}],
+  "market_cap": [{"name":"AAPL","market_cap":0.0449579496},{"name":"FB","market_cap":0.0233675042},{"name":"AMZN","market_cap":0.0187334486},{"name":"MSFT","market_cap":0.0138718156},{"name":"BAC","market_cap":0.0137302511},{"name":"GOOGL","market_cap":0.0132457758},{"name":"NFLX","market_cap":0.0107452894},{"name":"GE","market_cap":0.0093528615},{"name":"JPM","market_cap":0.0093435135},{"name":"C","market_cap":0.0092459082}],
+  "pos_pct_change": [{"name":"NVDA","pct_change":1749.6362166532},{"name":"NFLX","pct_change":923.3320955564},{"name":"ALGN","pct_change":615.9486709441},{"name":"EA","pct_change":608.4052964882},{"name":"STZ","pct_change":572.3704866562},{"name":"AVGO","pct_change":572.0838052095},{"name":"FB","pct_change":531.2138728324},{"name":"MU","pct_change":442.064516129},{"name":"AMZN","pct_change":440.8589425463},{"name":"ATVI","pct_change":417.9716629381}],
+  "neg_pct_change": [{"name":"CHK","pct_change":-85.7142857143},{"name":"RRC","pct_change":-81.8156618157},{"name":"DISCA","pct_change":-67.6507625577},{"name":"DISCK","pct_change":-66.0216718266},{"name":"MOS","pct_change":-58.8762214984},{"name":"CTL","pct_change":-58.752417795},{"name":"MAT","pct_change":-57.8373015873},{"name":"KMI","pct_change":-54.0159574468},{"name":"APA","pct_change":-53.2782043709},{"name":"NBL","pct_change":-53.0513176144}],
+  "single_day_pct": [{"name":"AIV","pct_change":4.2700729927},{"name":"MCO","pct_change":-4.2181978799},{"name":"DLTR","pct_change":4.1867546308},{"name":"MGM","pct_change":4.0030792918},{"name":"PXD","pct_change":3.176},{"name":"MNST","pct_change":-2.982607669},{"name":"SPGI","pct_change":-2.8460837887},{"name":"ANDV","pct_change":2.6686999619},{"name":"SNA","pct_change":2.6059898872},{"name":"CXO","pct_change":2.5709409004}],
+  "vol": [{"name":"NWL","vol":4.196013831092295},{"name":"AMD","vol":3.554904247088183},{"name":"BHGE","vol":3.531140862107059},{"name":"MRO","vol":3.4856925840715647},{"name":"FL","vol":3.397341062905405},{"name":"SIG","vol":3.2484117352677906},{"name":"CHK","vol":3.131561898259444},{"name":"EVHC","vol":3.015697816503595},{"name":"MAT","vol":2.8484650902243236},{"name":"UAA","vol":2.8297850732558123}],
+  "beta": [{"name":"AAPL","avg_stock_return":0.0008603362283,"avg_market_return":0.00026059528679,"beta":0.9372892654968192}],
+  "stock_index_corr": [{"correlation":0.8979647052544124}],
+  "rel_strength": [{"name":"AAPL","rsi":53.6091}],
+  "exp_returns": [{"name":"AAPL","one_year_cumulative_return":0.22449919424385345},{"name":"GOOGL","one_year_cumulative_return":0.2845476010068406}]
 }

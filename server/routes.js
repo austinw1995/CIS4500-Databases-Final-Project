@@ -325,27 +325,35 @@ const stock_index_comparison = async function(req, res) {
   //Compare and contrast the performance of selected S&P 500 stocks with selected indices
   //HSI', 'NYA', 'N100', 'NSEI
   let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
+  //const companiesArray = companies.split(',');
   let inds = req.params.indexes;
-  const indsArray = inds.split(',');
-  connection.query(`WITH SELECTED_STOCKS AS (
-    SELECT date, name, close
+  //const indsArray = inds.split(',');
+  connection.query(`WITH StockReturns AS (
+    SELECT
+        date,
+        name AS stock_ticker,
+        (close - LAG(close) OVER (PARTITION BY name ORDER BY date)) / LAG(close) OVER (PARTITION BY name ORDER BY date) AS stock_return
     FROM Stocks_Cor
-    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
-    ORDER BY date ASC, name
- ),
- SELECTED_INX AS (
-    SELECT date, marketIndex, closeUSD
+    WHERE name = '${companies}'
+),
+IndexReturns AS (
+    SELECT
+        date,
+        marketIndex AS index_ticker,
+        (closeUSD - LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date)) / LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date) AS index_return
     FROM Markets_Cor2
-    WHERE marketIndex IN (${indsArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
-    ORDER BY date, marketIndex
- )
- SELECT date, name AS ticker, close AS close
- FROM SELECTED_STOCKS
- UNION
- SELECT date, marketIndex AS ticker, closeUSD AS close
- FROM SELECTED_INX
- ORDER BY date ASC, ticker`,
+    WHERE marketIndex = '${inds}' AND date BETWEEN '2013-02-08' AND '2018-02-07'
+)
+SELECT
+    sr.date,
+    sr.stock_ticker,
+    sr.stock_return,
+    ir.index_ticker,
+    ir.index_return
+FROM StockReturns sr
+JOIN IndexReturns ir ON sr.date = ir.date
+WHERE sr.stock_return IS NOT NULL AND ir.index_return IS NOT NULL
+ORDER BY sr.date;`,
    (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -361,28 +369,31 @@ const index_vs_stock_mean_comp = async function(req, res) {
   //Query to take the mean of selected stocks and compare with selected indices 
   //to see how a batch of stocks have performed in comparison to the overall market performance of particular markets.
   let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
+  //const companiesArray = companies.split(',');
   let inds = req.params.indexes;
-  const indsArray = inds.split(',');
-  connection.query(`WITH SELECTED_STOCKS AS (
-    SELECT date, 'SELECTED_STOCKS', AVG(close) AS close
- FROM Stocks_Cor
- WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
- GROUP BY date
- ORDER BY date ASC
- ),
- SELECTED_INX AS (
-    SELECT date, marketIndex, closeUSD
+  //const indsArray = inds.split(',');
+  connection.query(`WITH StockReturns AS (
+    SELECT
+        date,
+        name AS stock_ticker,
+        (close - LAG(close) OVER (PARTITION BY name ORDER BY date)) / LAG(close) OVER (PARTITION BY name ORDER BY date) AS stock_return
+    FROM Stocks_Cor
+    WHERE name = '${companies}'
+),
+IndexReturns AS (
+    SELECT
+        date,
+        marketIndex AS index_ticker,
+        (closeUSD - LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date)) / LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date) AS index_return
     FROM Markets_Cor2
-    WHERE marketIndex IN (${indsArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
-    ORDER BY date, marketIndex
- )
- SELECT date, 'SELECTED_STOCKS' AS ticker, close AS close
- FROM SELECTED_STOCKS
- UNION
- SELECT date, marketIndex AS ticker, closeUSD AS close
- FROM SELECTED_INX
- ORDER BY date ASC, ticker`,
+    WHERE marketIndex = '${inds}' AND date BETWEEN '2013-02-08' AND '2018-02-07'
+)
+SELECT
+    AVG(sr.stock_return) AS avg_daily_stock_return,
+    AVG(ir.index_return) AS avg_daily_index_return
+FROM StockReturns sr
+JOIN IndexReturns ir ON sr.date = ir.date
+WHERE sr.stock_return IS NOT NULL AND ir.index_return IS NOT NULL;`,
    (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
@@ -525,20 +536,5 @@ ORDER BY
   });
 }
 
-module.exports = {
-  stock,
-  top_market_cap,
-  top_pos_pct_change,
-  top_neg_pct_change,
-  top_single_day_pct_change,
-  top_vol,
-  index_closing,
-  exp_returns,
-  beta,
-  stock_index_corr,
-  stock_index_comparison,
-  index_vs_stock_mean_comp,
-  rel_strength,
-  bol_bands,
-  macd,
-}
+module.exports = {stock, top_market_cap, top_pos_pct_change, top_neg_pct_change, top_single_day_pct_change, top_vol, index_closing,
+  exp_returns, beta, stock_index_corr, stock_index_comparison, index_vs_stock_mean_comp, rel_strength, bol_bands, macd}
