@@ -8,19 +8,18 @@ import 'chart.js/auto';
 import 'chartjs-adapter-moment';
 const config = require('../config.json');
 
-export default function StockIndexComparison() {
-  const [selectedIndexes, setSelectedIndexes] = useState('');
-  const [selectedStocks, setSelectedStocks] = useState('');
+export default function IndexQueries() {
+  const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState(null);
 
   const handleSearch = () => {
     // Add logic to handle the search based on the user's input
-    console.log('Fetching data for indexes:', selectedIndexes, 'from:', startDate, 'to:', endDate);
+    console.log('Fetching data for indexes:', searchQuery, 'from:', startDate, 'to:', endDate);
     // Fetch data and update 'data' state
-    fetch(`http://${config.server_host}:${config.server_port}/stock_index_comparison/?indexes=${selectedIndexes}` +
-      `&stocks=${selectedStocks}`
+    fetch(`http://${config.server_host}:${config.server_port}/index_closing/?indexes=${searchQuery}` +
+      `&start_date=${startDate}&end_date=${endDate}`
     )
       .then(res => res.json())
       .then(resJson => {
@@ -45,23 +44,10 @@ export default function StockIndexComparison() {
       };
     });
 
-    const companyNames = [...new Set(data.map(item => item.name))];
-    const companyData = companyNames.map(company => {
-      const companyStocks = data.filter(item => item.name === company);
-      return {
-        label: company,
-        data: companyStocks.map(item => ({
-          x: new Date(item.date).toLocaleDateString('en-US'),
-          y: item.close,
-        })),
-      };
-    });
-
-    const combinedData = [...indexData, ...companyData];
-
     const chartData = {
-      datasets: combinedData.map(dataset => ({
-        ...dataset,
+      datasets: indexData.map((index, idx) => ({
+        label: index.label,
+        data: index.data,
         borderColor: `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`, // Random color
         fill: false,
       })),
@@ -95,22 +81,14 @@ export default function StockIndexComparison() {
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Stock/Index Comparisons
+          Index Trends
         </Typography>
         <TextField
           fullWidth
           label="Search for indexes"
           variant="outlined"
-          value={selectedIndexes}
-          onChange={(e) => setSelectedIndexes(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Search for stocks"
-          variant="outlined"
-          value={selectedStocks}
-          onChange={(e) => setSelectedStocks(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           sx={{ mb: 2 }}
         />
         <TextField
