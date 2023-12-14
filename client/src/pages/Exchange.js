@@ -14,6 +14,12 @@ export default function StockExchangeIndexQueries() {
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState(null);
 
+  const [searchQueryCalculate, setSearchQueryCalculate] = useState('');
+  const [startDateCalculate, setStartDateCalculate] = useState('');
+  const [endDateCalculate, setEndDateCalculate] = useState('');
+  const [selectedCalculations, setSelectedCalculations] = useState([]);
+  const [calculationResults, setCalculationResults] = useState(null);
+
   const handleSearch = () => {
     // Add logic to handle the search based on the user's input
     console.log('Fetching data for stocks:', searchQuery, 'from:', startDate, 'to:', endDate);
@@ -26,6 +32,73 @@ export default function StockExchangeIndexQueries() {
         console.log('Fetched data:', resJson);
         setData(resJson);
       });
+  };
+
+  const handleCalculate = () => {
+    console.log('Calculating:', selectedCalculations, 'for stocks:', searchQueryCalculate);
+    // Fetch data and update 'calculationResults' state
+    // Create an array to store all the fetch promises
+    const fetchPromises = [];
+
+    // Loop through selectedCalculations array
+    for (const calculationType of selectedCalculations) {
+      // Construct the API route based on the calculation type
+      let apiRoute = null;
+      if (calculationType === 'exp_returns') {
+        apiRoute = `http://${config.server_host}:${config.server_port}/${calculationType}?stocks=${searchQueryCalculate}`;
+      } else if (calculationType === 'rel_strength') {
+        apiRoute = `http://${config.server_host}:${config.server_port}/${calculationType}?stocks=${searchQueryCalculate}` +
+          `&start_date=${startDateCalculate}&end_date=${endDateCalculate}`
+      }
+      // Fetch data for the current calculation type and store the promise
+      const fetchPromise = fetch(apiRoute)
+        .then(res => res.json())
+        .then(resJson => {
+          console.log(`Calculation results (${calculationType}):`, resJson);
+          return { [calculationType]: resJson }; // Return an object with calculation type as key
+        });
+      fetchPromises.push(fetchPromise);
+    }
+
+    // Wait for all fetch promises to resolve
+    Promise.all(fetchPromises)
+      .then(resultsArray => {
+        // Combine results from all calculations into a single object
+        const combinedResults = Object.assign({}, ...resultsArray);
+        console.log('Combined Calculation Results:', combinedResults);
+
+        // Update 'calculationResults' state with the combined results
+        setCalculationResults(combinedResults);
+      })
+      .catch(error => {
+        console.error('Error during calculations:', error);
+      });
+  };
+
+  const renderTable = () => {
+    if (!calculationResults) return null;
+
+    // Extract keys (calculation types) from the combined results
+    const calculationTypes = Object.keys(calculationResults);
+
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>Calculation Type</th>
+            <th>Results</th>
+          </tr>
+        </thead>
+        <tbody>
+          {calculationTypes.map((calculationType, index) => (
+            <tr key={index}>
+              <td>{calculationType}</td>
+              <td>{JSON.stringify(calculationResults[calculationType], null, 2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
   };
 
   // Render line chart when data is available
@@ -124,6 +197,49 @@ export default function StockExchangeIndexQueries() {
         */}
         {data && renderLineChart()};
       </div>
+      <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+        <InputLabel>Select Calculations</InputLabel>
+        <Select
+          multiple
+          value={selectedCalculations}
+          onChange={(e) => setSelectedCalculations(e.target.value)}
+          label="Select Calculations"
+          renderValue={(selected) => selected.join(', ')}
+        >
+          <MenuItem value="exp_returns">Expected Returns</MenuItem>
+          <MenuItem value="rel_strength">Relative Strength</MenuItem>
+        </Select>
+      </FormControl>
+      <TextField
+        fullWidth
+        label="Search for stocks"
+        variant="outlined"
+        value={searchQueryCalculate}
+        onChange={(e) => setSearchQueryCalculate(e.target.value)}
+        sx={{ mb: 2 }}
+      />
+      <TextField
+        type="date"
+        label="Start Date"
+        InputLabelProps={{ shrink: true }}
+        variant="outlined"
+        value={startDateCalculate}
+        onChange={(e) => setStartDateCalculate(e.target.value)}
+        sx={{ mb: 2, width: '50%' }}
+      />
+      <TextField
+        type="date"
+        label="End Date"
+        InputLabelProps={{ shrink: true }}
+        variant="outlined"
+        value={endDateCalculate}
+        onChange={(e) => setEndDateCalculate(e.target.value)}
+        sx={{ mb: 2, width: '50%' }}
+      />
+      <Button variant="contained" color="primary" onClick={() => handleCalculate()}>
+        Calculate
+      </Button>
+      {renderTable()}
     </Container>
   );
 }

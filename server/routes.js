@@ -156,9 +156,17 @@ const top_neg_pct_change = async function (req, res) {
 
 const top_single_day_pct_change = async function (req, res) {
   //Identify the top 10 stocks by percentage change in price on a selected date.
-  connection.query(`SELECT name, ((close - open) / open) * 100 AS pct_change
+  const startdate = req.query.start_date || '2013-02-08';
+  connection.query(`WITH closestBeginDate AS (
+    SELECT date AS closest_beg_date
+    FROM Stocks_Cor
+    WHERE date <= '${startdate}'
+    ORDER BY closest_beg_date DESC
+    LIMIT 1
+  )
+  SELECT name, ((close - open) / open) * 100 AS pct_change
   FROM Stocks_Cor
-  WHERE date = '2013-02-08'
+  WHERE date = (SELECT closest_beg_date FROM closestBeginDate)
   ORDER BY ABS(pct_change) DESC, name
   LIMIT 10`,
     (err, data) => {
@@ -235,12 +243,13 @@ const index_closing = async function (req, res) {
 const exp_returns = async function (req, res) {
   //Query to determine cumulative expected returns based on a trailing 1 year period for selected stocks.
   //companies=AMD,NWL
-  let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
+  let companies = req.query.stocks;
+  const companiesArray = companies.split(', ');
+  const formattedCompanies = companiesArray.map(comp => `'${comp}'`).join(',');
   connection.query(`WITH SelectedStocks AS (
     SELECT *
     FROM Stocks_Cor
-    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
+    WHERE name IN (${formattedCompanies})
  ),
  DailyReturns AS (
     SELECT
@@ -273,9 +282,11 @@ const exp_returns = async function (req, res) {
 const beta = async function (req, res) {
   //Query to get the beta of selected stocks with respect to a chosen index.
   //AAPL,GOOGL,MSFT & NYA
-  let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
-  let index = req.params.index;
+  let companies = req.query.stocks;
+  const companiesArray = companies.split(', ');
+  const formattedCompanies = companiesArray.map(comp => `'${comp}'`).join(',');
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
   connection.query(`WITH StockReturns AS (
     SELECT
         s.name,
@@ -284,8 +295,8 @@ const beta = async function (req, res) {
     FROM
         Stocks_Cor s
     WHERE
-        s.name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
-        AND s.date BETWEEN '2014-02-07' AND '2018-02-07'
+        s.name IN (${formattedCompanies})
+        AND s.date BETWEEN '${startdate}' AND '${enddate}'
 ),
 MarketReturns AS (
     SELECT
@@ -295,7 +306,7 @@ MarketReturns AS (
         Markets_Cor2 m
     WHERE
         m.marketIndex = '${index}'
-        AND m.date BETWEEN '2014-02-07' AND '2018-02-07'
+        AND m.date BETWEEN '${startdate}' AND '${enddate}'
 )
 SELECT
     sr.name,
@@ -446,12 +457,15 @@ WHERE sr.stock_return IS NOT NULL AND ir.index_return IS NOT NULL;`,
 
 const rel_strength = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
-  let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
+  let companies = req.query.stocks;
+  const companiesArray = companies.split(', ');
+  const formattedCompanies = companiesArray.map(comp => `'${comp}'`).join(',');
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT name, date, close
     FROM Stocks_Cor
-    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2014-02-07' AND '2018-02-07'
+    WHERE name IN (${formattedCompanies}) AND date BETWEEN '${startdate}' AND '${enddate}'
   ),
   STOCK_PRICE_CHANGES AS (
      SELECT
