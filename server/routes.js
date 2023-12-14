@@ -215,12 +215,14 @@ const top_vol = async function (req, res) {
 const index_closing = async function (req, res) {
   //View the prices of multiple selected indices over a specified period of time (time series of index prices).
   //  WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI')
-  let indexes = req.params.indexes;
-  const indexArray = indexes.split(',');
+  let indexes = req.query.indexes;
+  const indexArray = indexes.split(', ');
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
   connection.query(`SELECT date, marketIndex, closeUSD
   FROM Markets_Cor2
-  WHERE marketIndex IN (${indexArray.map(ind => `'${ind}'`).join(',')}) AND date BETWEEN '1986-12-31' AND '2021-05-31'
-  ORDER BY date, marketIndex`,
+  WHERE marketIndex IN (${indexArray.map(ind => `'${ind}'`).join(',')}) AND date BETWEEN '${startdate}' AND '${enddate}'
+  ORDER BY date ASC, marketIndex`,
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
