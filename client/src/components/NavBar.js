@@ -44,6 +44,7 @@ export default function NavBar() {
             <NavText href='/sp' text='S&P 500 Stock Queries' />
             <NavText href='/exchange' text='Stock Exchange Trends' />
             <NavText href='/comparisons' text='Stock/Index Comparisons' />
+            <NavText href='/indexes' text='Index Trends' />
           </Box>
         </Toolbar>
       </Container>
