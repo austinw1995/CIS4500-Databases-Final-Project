@@ -12,129 +12,169 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
-const stock = async function(req, res) {
+const stock = async function (req, res) {
   // Selecting the stock price over time of multiple companies over a specified period of time.
-  let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
-  connection.query(`SELECT date, name, close
+  let companies = req.query.stocks;
+  const companiesArray = companies.split(', ');
+  const formattedCompanies = companiesArray.map(comp => `'${comp}'`).join(',');
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
+  connection.query(`
+  SELECT date, name, close
   FROM Stocks_Cor
-  WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
+  WHERE name IN (${formattedCompanies}) AND date BETWEEN '${startdate}' AND '${enddate}'
   ORDER BY date ASC, name
-  LIMIT 10`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+  `,
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const top_market_cap = async function(req, res) {
+const top_market_cap = async function (req, res) {
   // top 10 stocks by market cap
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
   connection.query(`WITH TotalMarketCap AS (
     SELECT name, SUM(close * volume) AS numerator
     FROM Stocks_Cor
-    WHERE date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE date BETWEEN '${startdate}' AND '${enddate}'
     GROUP BY name
  )
  SELECT name, (numerator / (SELECT SUM(numerator) FROM TotalMarketCap)) AS market_cap
  FROM TotalMarketCap
  ORDER BY market_cap DESC, name
  LIMIT 10`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const top_pos_pct_change = async function(req, res) {
+const top_pos_pct_change = async function (req, res) {
   // Identify the top 10 stocks by positive percentage change in price in a selected period of time.
-  connection.query(`WITH BeginDate AS (
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
+  connection.query(`WITH closestBeginDate AS (
+    SELECT date AS closest_beg_date
+    FROM Stocks_Cor
+    WHERE date <= '${startdate}'
+    ORDER BY closest_beg_date DESC
+    LIMIT 1
+  ),
+  BeginDate AS (
     SELECT name, close AS beg_price
-    FROM Stocks
-    WHERE date = '2013-02-08'
+    FROM Stocks_Cor
+    WHERE date = (SELECT closest_beg_date FROM closestBeginDate)
  ),
+ closestEndDate AS (
+  SELECT date AS closest_end_date
+  FROM Stocks_Cor
+  WHERE date <= '${enddate}'
+  ORDER BY closest_end_date DESC
+  LIMIT 1
+),
  FinalDate AS (
     SELECT name, close AS end_price
-    FROM Stocks
-    WHERE date = '2018-02-07'
+    FROM Stocks_Cor
+    WHERE date = (SELECT closest_end_date FROM closestEndDate)
  ),
  Combined AS (
  SELECT BD.name, BD.beg_price, FD.end_price
  FROM BeginDate BD JOIN FinalDate FD ON BD.name = FD.name
  )
- SELECT C.name, ((C.end_price - C.beg_price)/(C.beg_price)) * 100 AS pct_change
+ SELECT C.name, ((C.end_price - C.beg_price)/(C.beg_price)) * 100 AS pos_pct_change
  FROM Combined C
  WHERE C.end_price >= C.beg_price
- ORDER BY pct_change DESC, name
+ ORDER BY pos_pct_change DESC, name
  LIMIT 10`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
 
-const top_neg_pct_change = async function(req, res) {
+const top_neg_pct_change = async function (req, res) {
   //Identify the top 10 stocks by negative percentage change in price in a selected period of time.
-  connection.query(`WITH BeginDate AS (
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
+  connection.query(`WITH closestBeginDate AS (
+    SELECT date AS closest_beg_date
+    FROM Stocks_Cor
+    WHERE date <= '${startdate}'
+    ORDER BY closest_beg_date DESC
+    LIMIT 1
+  ),
+  BeginDate AS (
     SELECT name, close AS beg_price
-    FROM Stocks
-    WHERE date = '2013-02-08'
+    FROM Stocks_Cor
+    WHERE date = (SELECT closest_beg_date FROM closestBeginDate)
  ),
+ closestEndDate AS (
+  SELECT date AS closest_end_date
+  FROM Stocks_Cor
+  WHERE date <= '${enddate}'
+  ORDER BY closest_end_date DESC
+  LIMIT 1
+),
  FinalDate AS (
     SELECT name, close AS end_price
-    FROM Stocks
-    WHERE date = '2018-02-07'
+    FROM Stocks_Cor
+    WHERE date = (SELECT closest_end_date FROM closestEndDate)
  ),
  Combined AS (
  SELECT BD.name, BD.beg_price, FD.end_price
  FROM BeginDate BD JOIN FinalDate FD ON BD.name = FD.name
  )
- SELECT C.name, ((C.end_price - C.beg_price)/(C.beg_price)) * 100 AS pct_change
+ SELECT C.name, ((C.end_price - C.beg_price)/(C.beg_price)) * 100 AS neg_pct_change
  FROM Combined C
  WHERE C.end_price < C.beg_price
- ORDER BY pct_change ASC, name
+ ORDER BY neg_pct_change ASC, name
  LIMIT 10`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const top_single_day_pct_change = async function(req, res) {
+const top_single_day_pct_change = async function (req, res) {
   //Identify the top 10 stocks by percentage change in price on a selected date.
   connection.query(`SELECT name, ((close - open) / open) * 100 AS pct_change
-  FROM Stocks
+  FROM Stocks_Cor
   WHERE date = '2013-02-08'
   ORDER BY ABS(pct_change) DESC, name
   LIMIT 10`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const top_vol = async function(req, res) {
+const top_vol = async function (req, res) {
   //Top 10 volatile stocks over a selected period of time.
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
   connection.query(`WITH DailyReturns AS (
     SELECT
         sc.date,
@@ -143,7 +183,7 @@ const top_vol = async function(req, res) {
     FROM
         Stocks_Cor sc
     WHERE
-        sc.date BETWEEN '2017-02-08' AND '2018-02-07'
+        sc.date BETWEEN '${startdate}' AND '${enddate}'
  ),
  Volatility AS (
     SELECT
@@ -162,17 +202,17 @@ const top_vol = async function(req, res) {
  ORDER BY
     v.volatility DESC
  Limit 10`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const index_closing = async function(req, res) {
+const index_closing = async function (req, res) {
   //View the prices of multiple selected indices over a specified period of time (time series of index prices).
   //  WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI')
   let indexes = req.params.indexes;
@@ -181,18 +221,18 @@ const index_closing = async function(req, res) {
   FROM Markets_Cor2
   WHERE marketIndex IN (${indexArray.map(ind => `'${ind}'`).join(',')}) AND date BETWEEN '1986-12-31' AND '2021-05-31'
   ORDER BY date, marketIndex`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
 
-const exp_returns = async function(req, res) {
+const exp_returns = async function (req, res) {
   //Query to determine cumulative expected returns based on a trailing 1 year period for selected stocks.
   //companies=AMD,NWL
   let companies = req.params.stocks;
@@ -220,17 +260,17 @@ const exp_returns = async function(req, res) {
  SELECT name, one_year_cumulative_return
  FROM ProjectedReturns
  WHERE end_date = (SELECT MAX(date) FROM Stocks_Cor)`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const beta = async function(req, res) {
+const beta = async function (req, res) {
   //Query to get the beta of selected stocks with respect to a chosen index.
   //AAPL,GOOGL,MSFT & NYA
   let companies = req.params.stocks;
@@ -273,18 +313,18 @@ JOIN
     MarketReturns mr ON sr.date = mr.date
 GROUP BY
     sr.name;`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
 
-const stock_index_corr = async function(req, res) {
+const stock_index_corr = async function (req, res) {
   //Calculates correlation between the average price of multiple stocks (can also just be one stock) and a selected index.
   let companies = req.params.stocks;
   const companiesArray = companies.split(',');
@@ -310,18 +350,18 @@ const stock_index_corr = async function(req, res) {
  SELECT (SUM((S.stock_price - A.avg_stock_price) * (S.index_price - A.avg_index_price)) / (COUNT(*) - 1)) /
  (SQRT(SUM(POW(S.stock_price - A.avg_stock_price, 2)) / (COUNT(*) - 1)) * SQRT(SUM(POW(S.index_price - A.avg_index_price, 2)) / (COUNT(*) - 1))) AS correlation
  FROM StockAndIndex S, Averages A`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
 
-const stock_index_comparison = async function(req, res) {
+const stock_index_comparison = async function (req, res) {
   //Compare and contrast the performance of selected S&P 500 stocks with selected indices
   //HSI', 'NYA', 'N100', 'NSEI
   let companies = req.params.stocks;
@@ -354,18 +394,18 @@ FROM StockReturns sr
 JOIN IndexReturns ir ON sr.date = ir.date
 WHERE sr.stock_return IS NOT NULL AND ir.index_return IS NOT NULL
 ORDER BY sr.date;`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
 
-const index_vs_stock_mean_comp = async function(req, res) {
+const index_vs_stock_mean_comp = async function (req, res) {
   //Query to take the mean of selected stocks and compare with selected indices 
   //to see how a batch of stocks have performed in comparison to the overall market performance of particular markets.
   let companies = req.params.stocks;
@@ -394,17 +434,17 @@ SELECT
 FROM StockReturns sr
 JOIN IndexReturns ir ON sr.date = ir.date
 WHERE sr.stock_return IS NOT NULL AND ir.index_return IS NOT NULL;`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const rel_strength = async function(req, res) {
+const rel_strength = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.params.stocks;
   const companiesArray = companies.split(',');
@@ -434,18 +474,18 @@ const rel_strength = async function(req, res) {
   FROM AVG_GAINS_LOSSES
   WHERE avg_loss <> 0
   ORDER BY rsi`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
 
-const bol_bands = async function(req, res) {
+const bol_bands = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.params.stocks;
   const companiesArray = companies.split(',');
@@ -480,17 +520,17 @@ FROM
     BollingerBands
 ORDER BY
     name, date;`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-const macd = async function(req, res) {
+const macd = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.params.stocks;
   const companiesArray = companies.split(',');
@@ -526,15 +566,17 @@ FROM
     MACDValues
 ORDER BY
     name, date;`,
-   (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
+    (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
 }
 
-module.exports = {stock, top_market_cap, top_pos_pct_change, top_neg_pct_change, top_single_day_pct_change, top_vol, index_closing,
-  exp_returns, beta, stock_index_corr, stock_index_comparison, index_vs_stock_mean_comp, rel_strength, bol_bands, macd}
+module.exports = {
+  stock, top_market_cap, top_pos_pct_change, top_neg_pct_change, top_single_day_pct_change, top_vol, index_closing,
+  exp_returns, beta, stock_index_corr, stock_index_comparison, index_vs_stock_mean_comp, rel_strength, bol_bands, macd
+}

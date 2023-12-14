@@ -42,7 +42,7 @@ export default function NavBar() {
             <NavText href='/' text='Home' />
             <NavText href='/stats' text='Basic Stats' />
             <NavText href='/sp' text='S&P 500 Stock Queries' />
-            <NavText href='/exchange' text='Stock Exchange Index Queries' />
+            <NavText href='/exchange' text='Stock Exchange Trends' />
             <NavText href='/comparisons' text='Stock/Index Comparisons' />
           </Box>
         </Toolbar>

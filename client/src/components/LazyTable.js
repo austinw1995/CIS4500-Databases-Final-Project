@@ -18,9 +18,12 @@ export default function LazyTable({ route, columns, defaultPageSize, rowsPerPage
   // Now notice the dependency array contains route, page, pageSize, since we
   // need to re-fetch the data if any of these values change
   useEffect(() => {
-    fetch(`${route}?page=${page}&page_size=${pageSize}`)
+    fetch(`${route}`)
       .then(res => res.json())
-      .then(resJson => setData(resJson));
+      .then(resJson => {
+        console.log('Response data:', resJson);
+        setData(resJson);
+      });
   }, [route, page, pageSize]);
 
   const handleChangePage = (e, newPage) => {
