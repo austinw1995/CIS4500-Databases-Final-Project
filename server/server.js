@@ -8,7 +8,7 @@ app.use(cors({
   origin: '*',
 }));
 
-app.get('/stock/:stocks', routes.stock);
+app.get('/stock', routes.stock);
 app.get('/market_cap', routes.top_market_cap);
 app.get('/pos_pct_change', routes.top_pos_pct_change);
 app.get('/neg_pct_change', routes.top_neg_pct_change);
