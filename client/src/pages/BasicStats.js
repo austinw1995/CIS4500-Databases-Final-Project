@@ -106,7 +106,7 @@ const BasicStats = () => {
   return (
     <Container maxWidth="sm" sx={{ mt: 4, ml: 15, mr: 0 }}>
       <Typography variant="h4" gutterBottom sx={{ mb: 2 }}>
-        S&P 500 Statistics
+        S&P 500 Top 10 Stocks by...
       </Typography>
       <FormControl component="fieldset" sx={{ m: 3 }}>
         <FormGroup>

@@ -139,7 +139,7 @@ export default function BloombergTerminal() {
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Bloomberg Terminal
+          Investment by KPI:
         </Typography>
         <TextField
           fullWidth

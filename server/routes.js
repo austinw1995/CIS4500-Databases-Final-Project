@@ -192,20 +192,30 @@ const top_vol = async function (req, res) {
     SELECT
         sc.date,
         sc.name,
-        (sc.close - LAG(sc.close) OVER (PARTITION BY sc.name ORDER BY sc.date)) / LAG(sc.close) OVER (PARTITION BY sc.name ORDER BY sc.date) AS daily_return
+        sc.close,
+        LAG(sc.close) OVER (PARTITION BY sc.name ORDER BY sc.date) AS prev_close
     FROM
         Stocks_Cor sc
     WHERE
         sc.date BETWEEN '${startdate}' AND '${enddate}'
  ),
+ ReturnsCalc AS (
+    SELECT
+        dr.name,
+        (dr.close - dr.prev_close) / dr.prev_close AS daily_return
+    FROM
+        DailyReturns dr
+    WHERE
+        dr.prev_close IS NOT NULL
+ ),
  Volatility AS (
     SELECT
-        name,
-        SQRT(AVG(daily_return * daily_return)) AS volatility
+        rc.name,
+        SQRT(AVG(rc.daily_return * rc.daily_return)) AS volatility
     FROM
-        DailyReturns
+        ReturnsCalc rc
     GROUP BY
-        name
+        rc.name
  )
  SELECT
     v.name,
@@ -214,7 +224,7 @@ const top_vol = async function (req, res) {
     Volatility v
  ORDER BY
     v.volatility DESC
- Limit 10`,
+ LIMIT 10;`,
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
@@ -487,16 +497,14 @@ const rel_strength = async function (req, res) {
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT name, date, close
     FROM Stocks_Cor
-    WHERE name IN (${formattedCompanies}) AND date BETWEEN '${startdate}' AND '${enddate}'
+    WHERE name IN (${formattedCompanies}) AND date BETWEEN '${startdate}' AND '${enddate}' 
   ),
   STOCK_PRICE_CHANGES AS (
      SELECT
-     S1.name,
-     S1.date,
-     (S1.close - S2.close) AS price_change
-     FROM SELECTED_STOCKS S1 JOIN
-     SELECTED_STOCKS S2 ON S1.name = S2.name AND S2.date = (SELECT MAX(date) FROM SELECTED_STOCKS WHERE date < S1.date)
-     ORDER BY S1.date, S1.name
+         S1.name,
+         S1.date,
+         (S1.close - LAG(S1.close) OVER (PARTITION BY S1.name ORDER BY S1.date)) AS price_change
+     FROM SELECTED_STOCKS S1
   ),
   AVG_GAINS_LOSSES AS (
      SELECT
@@ -509,7 +517,7 @@ const rel_strength = async function (req, res) {
   SELECT name, 100 - (100 / (1 + avg_gain / avg_loss)) AS rsi
   FROM AVG_GAINS_LOSSES
   WHERE avg_loss <> 0
-  ORDER BY rsi`,
+  ORDER BY rsi;`,
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);

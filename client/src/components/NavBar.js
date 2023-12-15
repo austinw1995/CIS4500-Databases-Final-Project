@@ -40,12 +40,12 @@ export default function NavBar() {
         <Toolbar disableGutters sx={{ justifyContent: 'center' }}> {/* Center the toolbar contents */}
           <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}> {/* Space out the links */}
             <NavText href='/' text='Home' />
-            <NavText href='/stats' text='Basic Stats' />
+            <NavText href='/stats' text='S&P 500' />
             {/*<NavText href='/sp' text='S&P 500 Stock Queries' />*/}
-            <NavText href='/exchange' text='Stock Exchange Trends' />
+            <NavText href='/exchange' text='Individual Stock Evaluator' />
+            <NavText href='/indexes' text='Index Evaluator' />
             <NavText href='/comparisons' text='Stock/Index Comparisons' />
-            <NavText href='/bloomberg' text='Bloomberg Terminal' />
-            <NavText href='/indexes' text='Index Trends' />
+            <NavText href='/bloomberg' text='Stock Investment Evaluator' />
           </Box>
         </Toolbar>
       </Container>
