@@ -408,6 +408,11 @@ Complex Query 15 (runtime > 15s):
 Query to calculate Bollinger Bands for selected stocks, indicating potential overbought/oversold conditions.
 By identifying instances where the stock prices are closest to the upper/lower bands, it helps highlight periods of heightened vol and potential trend reversal
 
+WITH SELECTED_STOCKS AS (
+    SELECT name, date, close
+    FROM Stocks_Cor
+    WHERE name IN ('AAPL', 'GOOGL', 'MSFT') AND date BETWEEN '2014-02-07' AND '2018-02-07'
+),
 StockPriceChanges AS (
     SELECT
         S1.name,
