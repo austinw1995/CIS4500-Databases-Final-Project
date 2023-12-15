@@ -12,6 +12,7 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
+// good
 const stock = async function (req, res) {
   // Selecting the stock price over time of multiple companies over a specified period of time.
   let companies = req.query.stocks;
@@ -35,6 +36,7 @@ const stock = async function (req, res) {
     });
 }
 
+// good
 const top_market_cap = async function (req, res) {
   // top 10 stocks by market cap
   const startdate = req.query.start_date || '2013-02-08';
@@ -59,6 +61,7 @@ const top_market_cap = async function (req, res) {
     });
 }
 
+// good
 const top_pos_pct_change = async function (req, res) {
   // Identify the top 10 stocks by positive percentage change in price in a selected period of time.
   const startdate = req.query.start_date || '2013-02-08';
@@ -106,7 +109,7 @@ const top_pos_pct_change = async function (req, res) {
     });
 }
 
-
+// good
 const top_neg_pct_change = async function (req, res) {
   //Identify the top 10 stocks by negative percentage change in price in a selected period of time.
   const startdate = req.query.start_date || '2013-02-08';
@@ -154,6 +157,7 @@ const top_neg_pct_change = async function (req, res) {
     });
 }
 
+// good
 const top_single_day_pct_change = async function (req, res) {
   //Identify the top 10 stocks by percentage change in price on a selected date.
   const startdate = req.query.start_date || '2013-02-08';
@@ -179,6 +183,7 @@ const top_single_day_pct_change = async function (req, res) {
     });
 }
 
+// good
 const top_vol = async function (req, res) {
   //Top 10 volatile stocks over a selected period of time.
   const startdate = req.query.start_date || '2013-02-08';
@@ -220,6 +225,7 @@ const top_vol = async function (req, res) {
     });
 }
 
+// good
 const index_closing = async function (req, res) {
   //View the prices of multiple selected indices over a specified period of time (time series of index prices).
   //  WHERE marketIndex IN ('HSI', 'NYA', 'N100', 'NSEI')
@@ -241,7 +247,7 @@ const index_closing = async function (req, res) {
     });
 }
 
-
+// good
 const exp_returns = async function (req, res) {
   //Query to determine cumulative expected returns based on a trailing 1 year period for selected stocks.
   //companies=AMD,NWL
@@ -281,9 +287,11 @@ const exp_returns = async function (req, res) {
     });
 }
 
+// next
 const beta = async function (req, res) {
   //Query to get the beta of selected stocks with respect to a chosen index.
   //AAPL,GOOGL,MSFT & NYA
+  const index = req.query.index;
   let companies = req.query.stocks;
   const companiesArray = companies.split(', ');
   const formattedCompanies = companiesArray.map(comp => `'${comp}'`).join(',');
@@ -312,8 +320,6 @@ MarketReturns AS (
 )
 SELECT
     sr.name,
-    AVG(sr.daily_return) AS avg_stock_return,
-    AVG(mr.daily_return) AS avg_market_return,
     (
         SUM(sr.daily_return * mr.daily_return) -
         SUM(mr.daily_return) * SUM(sr.daily_return) / COUNT(*)
@@ -336,16 +342,17 @@ GROUP BY
     });
 }
 
-
+// next
 const stock_index_corr = async function (req, res) {
   //Calculates correlation between the average price of multiple stocks (can also just be one stock) and a selected index.
-  let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
-  let index = req.params.index;
+  const index = req.query.index;
+  let companies = req.query.stocks;
+  const companiesArray = companies.split(', ');
+  const formattedCompanies = companiesArray.map(comp => `'${comp}'`).join(',');
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT date, AVG(close) AS close
     FROM Stocks_Cor
-    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
+    WHERE name IN (${formattedCompanies})
     GROUP BY date
     ORDER BY date ASC
  ),
@@ -373,7 +380,7 @@ const stock_index_corr = async function (req, res) {
     });
 }
 
-
+// next
 const stock_index_comparison = async function (req, res) {
   //Compare and contrast the performance of selected S&P 500 stocks with selected indices
   //HSI', 'NYA', 'N100', 'NSEI
@@ -417,7 +424,7 @@ ORDER BY sr.date;`,
     });
 }
 
-
+// next
 const index_vs_stock_mean_comp = async function (req, res) {
   //Query to take the mean of selected stocks and compare with selected indices 
   //to see how a batch of stocks have performed in comparison to the overall market performance of particular markets.
@@ -457,6 +464,7 @@ WHERE sr.stock_return IS NOT NULL AND ir.index_return IS NOT NULL;`,
     });
 }
 
+// good
 const rel_strength = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.query.stocks;
@@ -502,7 +510,7 @@ const rel_strength = async function (req, res) {
     });
 }
 
-
+// next
 const bol_bands = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.params.stocks;
@@ -548,6 +556,7 @@ ORDER BY
     });
 }
 
+// next
 const macd = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.params.stocks;
