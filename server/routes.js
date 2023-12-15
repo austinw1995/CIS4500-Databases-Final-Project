@@ -29,7 +29,7 @@ const stock = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -54,7 +54,7 @@ const top_market_cap = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -102,7 +102,7 @@ const top_pos_pct_change = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -150,7 +150,7 @@ const top_neg_pct_change = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -176,7 +176,7 @@ const top_single_day_pct_change = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -228,7 +228,7 @@ const top_vol = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -250,7 +250,7 @@ const index_closing = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -284,13 +284,13 @@ const exp_returns = async function (req, res) {
     FROM DailyReturns
     GROUP BY name, date
  )
- SELECT name, one_year_cumulative_return
+ SELECT name, one_year_cumulative_return AS exp
  FROM ProjectedReturns
  WHERE end_date = (SELECT MAX(date) FROM Stocks_Cor)`,
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -345,7 +345,7 @@ GROUP BY
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -383,7 +383,7 @@ const stock_index_corr = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -424,7 +424,7 @@ ORDER BY date;`,
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -477,7 +477,7 @@ ORDER BY date;`,
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -521,7 +521,7 @@ const rel_strength = async function (req, res) {
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
@@ -552,7 +552,7 @@ const bol_bands = async function (req, res) {
   `, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
-      res.json({});
+      res.json([]);
     } else {
       res.json(data);
     }
@@ -600,7 +600,7 @@ ORDER BY
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }

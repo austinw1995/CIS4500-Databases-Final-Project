@@ -23,7 +23,7 @@ const Livedata = () => {
   return (
     <div>
       <Typography variant="h5" gutterBottom color="textPrimary" mt={2}>
-        {data && data['Meta Data']['2. Symbol']} Stock Data
+        Live DOW Jones Industrial Average Data
       </Typography>
       {data && (
         <Paper elevation={3} sx={{ padding: 2, maxWidth: '100%', textAlign: 'left', marginBottom: 3 }}>

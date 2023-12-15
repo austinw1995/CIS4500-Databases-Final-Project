@@ -46,7 +46,7 @@ export default function NavBar() {
             <NavText href='/indexes' text='Index Evaluator' />
             <NavText href='/comparisons' text='Stock/Index Comparisons' />
             <NavText href='/bloomberg' text='Stock Investment Evaluator' />
-            <NavText href='/livedata' text='Live DOW' />
+            <NavText href='/livedata' text='Live Data' />
           </Box>
         </Toolbar>
       </Container>

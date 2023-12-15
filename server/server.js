@@ -28,30 +28,12 @@ app.get('/alphavantage_data', async (req, res) => {
   try {
     const apiUrl = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=DIA&apikey=A26ZCS4SYYRZWJS0';
     const response = await axios.get(apiUrl);
-    console.log(response.data);
     res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-//var request = require('request');
-
-
-
-// replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
-// var url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=IBM&apikey=W2BS2HZV2HGQ00RF';
-
-
-// axios.get(url)
-//   .then(response => {
-//     // Handle the data here, for example:
-//     console.log(response.data);
-//   })
-//   .catch(error => {
-//     console.error('Error:', error);
-//   });
 
 app.listen(config.server_port, () => {
   console.log(`Server running at http://${config.server_host}:${config.server_port}/`)

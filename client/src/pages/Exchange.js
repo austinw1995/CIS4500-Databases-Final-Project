@@ -15,6 +15,7 @@ export default function StockExchangeIndexQueries() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState(null);
+  const [inputError, setInputError] = useState(null);
 
   const [searchQueryCalculate, setSearchQueryCalculate] = useState('');
   const [startDateCalculate, setStartDateCalculate] = useState('');
@@ -24,6 +25,7 @@ export default function StockExchangeIndexQueries() {
 
   const handleSearch = () => {
     // Add logic to handle the search based on the user's input
+    setInputError(null);
     console.log('Fetching data for stocks:', searchQuery);
     console.log('from:', startDate, 'to:', endDate);
     // Fetch data and update 'data' state
@@ -34,6 +36,10 @@ export default function StockExchangeIndexQueries() {
       .then(resJson => {
         console.log('Fetched data:', resJson);
         setData(resJson);
+      })
+      .catch(error => {
+        console.error('Error during search:', error);
+        setInputError('Error fetching data. Please check your inputs and try again.');
       });
   };
 
@@ -60,6 +66,10 @@ export default function StockExchangeIndexQueries() {
         .then(resJson => {
           console.log(`Calculation results (${calculationType}):`, resJson);
           return { [calculationType]: resJson }; // Return an object with calculation type as key
+        })
+        .catch(error => {
+          console.error(`Error during ${calculationType} calculation:`, error);
+          setInputError(`Error during ${calculationType} calculation. Please check your inputs and try again.`);
         });
       fetchPromises.push(fetchPromise);
     }
@@ -97,15 +107,14 @@ export default function StockExchangeIndexQueries() {
                     <TableHead>
                       <TableRow>
                         <TableCell>Name</TableCell>
-                        <TableCell>Results</TableCell>
+                        <TableCell>Results</TableCell> {/* Updated the header */}
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {calculationResults[calculationType].map((result, resultIndex) => (
                         <TableRow key={resultIndex}>
                           <TableCell>{result.name}</TableCell>
-                          <TableCell>{result.rsi}</TableCell>
-                          <TableCell>{result.one_year_cumulative_return}</TableCell>
+                          <TableCell>{calculationType === 'rel_strength' ? result.rsi.toFixed(4) : result.exp.toFixed(4)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
