@@ -33,11 +33,9 @@ export default function StockIndexComparisons() {
             label="Select Indices"
             renderValue={(selected) => selected.join(', ')}
           >
-            {/* Populate with actual index options */}
             <MenuItem value="s&p500">S&P 500</MenuItem>
             <MenuItem value="nasdaq">NASDAQ</MenuItem>
             <MenuItem value="dowjones">Dow Jones</MenuItem>
-            {/* ... other index options */}
           </Select>
         </FormControl>
         <TextField

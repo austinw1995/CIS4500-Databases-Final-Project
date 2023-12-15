@@ -486,54 +486,41 @@ const rel_strength = async function (req, res) {
 
 
 const bol_bands = async function (req, res) {
-  //Calculates the relative strength index of selected stocks, and ranks them in descending order
-  let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
-  connection.query(`WITH StockPriceChanges AS (
+  let company = req.query.stock;
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
+  connection.query(`
     SELECT
         name,
         date,
-        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+        AVG(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
+        AVG(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) + 
+        2 * STDDEV(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
+        AVG(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) - 
+        2 * STDDEV(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band
     FROM
         Stocks_Cor
     WHERE
-        name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
-        AND date BETWEEN '2014-02-07' AND '2018-02-07'
-),
-BollingerBands AS (
-    SELECT
-        name,
-        date,
-        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
-        2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
-        -2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band
-    FROM
-        StockPriceChanges
-)
-SELECT
-    name,
-    date,
-    moving_avg,
-    upper_band,
-    lower_band
-FROM
-    BollingerBands
-ORDER BY
-    name, date;`,
-    (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data);
-      }
-    });
+        name = '${company}' AND date BETWEEN '${startdate}' AND '${enddate}'
+    ORDER BY
+        name, date;
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
 }
+
 
 const macd = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.params.stocks;
   const companiesArray = companies.split(',');
+  const start_date = req.params.start_date;
+  const end_date = req.params.end_date;
   connection.query(`WITH StockPriceChanges AS (
     SELECT
         name,

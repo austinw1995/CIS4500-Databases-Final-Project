@@ -122,7 +122,7 @@ export default function StockExchangeIndexQueries() {
           </pre>
         )}
         */}
-        {data && renderLineChart()};
+        {data && renderLineChart()}
       </div>
     </Container>
   );
