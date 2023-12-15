@@ -40,11 +40,44 @@ function getRandomDate() {
   return formattedDate;
 }
 
-const randomDate = getRandomDate();
-console.log(randomDate);
+const getRandomYear = () => {
+  // Generate a random year between 2014 and 2017 (inclusive)
+  return Math.floor(Math.random() * (2017 - 2014 + 1)) + 2014;
+};
+
+const getTodayFormatted = (randomYear) => {
+  const today = new Date();
+
+  // Set the random year in the date
+  today.setFullYear(randomYear);
+
+  // Format the date to 'YYYY-MM-DD'
+  const formattedDate =
+    today.getFullYear() +
+    '-' +
+    String(today.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(today.getDate()).padStart(2, '0');
+
+  return formattedDate;
+};
+
+const getYearsAgoString = (randomYear) => {
+  const today = new Date();
+
+  const yearsAgo = today.getFullYear() - randomYear;
+  return `on this day ${yearsAgo} years ago (${randomYear})`;
+};
+
+
 
 const HomePage = () => {
   // Adjusted Trending Up Arrow SVG as a logo
+  const randomYear = getRandomYear();
+
+  const todayFormatted = getTodayFormatted(randomYear);
+
+  const yearsAgoString = getYearsAgoString(randomYear);
   const Logo = () => (
     <svg width="100" height="50" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
       <text x="5" y="30" fontFamily="Arial, sans-serif" fontSize="30" fill="#1976d2">ST</text>
@@ -52,6 +85,8 @@ const HomePage = () => {
       <polyline points="62,10 70,10 70,18" stroke="#1976d2" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
+  const today = new Date();
+
 
 
   return (
@@ -71,12 +106,12 @@ const HomePage = () => {
             Welcome to Stock Trends! Use the navigation bar at the top to get started. Discover historical trends and glean insights from stock and index performances between 2013 and 2018 with Stock Trends. Delve into a period of economic recovery and analyze market dynamics that parallel our current financial landscape.
           </Typography>
         </Paper>
-        <Typography variant="body1">
-          Here are today's ({randomDate}) top 10 biggest gainers and losers:
+        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+          Stock Fact of the Day: Here are today's ({todayFormatted}) top 10 biggest gainers and losers {yearsAgoString}:
         </Typography>
         <LazyTable
           route={`http://${config.server_host}:${config.server_port}/single_day_pct`
-            + `?start_date=${randomDate}`}
+            + `?start_date=${todayFormatted}`}
           columns={singlePctChangeColumns}
           defaultPageSize={1} rowsPerPageOptions={[10]}
         />
