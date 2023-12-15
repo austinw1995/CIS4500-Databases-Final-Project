@@ -50,7 +50,7 @@ const HomePage = () => {
       <polyline points="62,10 70,10 70,18" stroke="#1976d2" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
-  
+
 
   return (
     <Container>
@@ -78,6 +78,9 @@ const HomePage = () => {
           columns={singlePctChangeColumns}
           defaultPageSize={1} rowsPerPageOptions={[10]}
         />
+        <Typography variant="body2" mt={2}>
+          Website created by Austin Wang, Ashish Pothireddy, Noah Erdogan, and Alex Huang
+        </Typography>
       </Box>
     </Container>
   );
