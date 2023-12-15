@@ -7,35 +7,133 @@ const config = require('../config.json');
 
 export default function BloombergTerminal() {
   const [selectedStock, setSelectedStock] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState(null);
 
   const handleCompare = () => {
-    console.log('Fetching data for stock:', selectedStock, 'from:', startDate, 'to:', endDate);
-    fetch(`http://${config.server_host}:${config.server_port}/stock/?stocks=${selectedStock}&start_date=${startDate}&end_date=${endDate}`)
-      .then(res => res.json())
-      .then(resJson => {
-        console.log('Fetched data:', resJson);
-        setData(resJson);
-      });
+    if (selectedMethod === 'Bollinger Bands') {
+      console.log('Fetching data for stock:', selectedStock, 'from:', startDate, 'to:', endDate);
+      fetch(`http://${config.server_host}:${config.server_port}/bol_bands/?stocks=${selectedStock}&start_date=${startDate}&end_date=${endDate}`)
+        .then(res => res.json())
+        .then(resJson => {
+          console.log('Fetched data:', resJson);
+          setData(resJson);
+        });
+    } else if (selectedMethod === 'Moving Average') {
+      console.log('Fetching data for stock:', selectedStock, 'from:', startDate, 'to:', endDate);
+      fetch(`http://${config.server_host}:${config.server_port}/macd/?stocks=${selectedStock}&start_date=${startDate}&end_date=${endDate}`)
+        .then(res => res.json())
+        .then(resJson => {
+          console.log('Fetched data:', resJson);
+          setData(resJson);
+        });
+    }
   };
 
   const renderLineChart = () => {
     if (!data) return null;
 
+    const companyNames = [...new Set(data.map(item => item.name))];
+    const companyData = companyNames.map(company => {
+      const companyStocks = data.filter(item => item.name === company);
+      return {
+        label: company,
+        datasets: selectedMethod === 'Bollinger Bands' ? (
+          // Bollinger Bands
+          [
+            {
+              label: `${company} - Lower Band`,
+              data: companyStocks.map(item => ({
+                x: new Date(item.date).toLocaleDateString('en-US'),
+                y: item.lower_band,
+              })),
+              borderColor: 'rgba(255, 0, 0, 1)',
+              fill: false,
+              pointRadius: 2,
+            },
+            {
+              label: `${company} - Moving Average`,
+              data: companyStocks.map(item => ({
+                x: new Date(item.date).toLocaleDateString('en-US'),
+                y: item.moving_avg,
+              })),
+              borderColor: 'rgba(0, 255, 0, 1)',
+              fill: false,
+              pointRadius: 2,
+            },
+            {
+              label: `${company} - Upper Band`,
+              data: companyStocks.map(item => ({
+                x: new Date(item.date).toLocaleDateString('en-US'),
+                y: item.upper_band,
+              })),
+              borderColor: 'rgba(0, 0, 255, 1)',
+              fill: false,
+              pointRadius: 2,
+            },
+          ]
+        ) : (
+          // Moving Average
+          [
+            {
+              label: `${company} - MACD Line`,
+              data: companyStocks.map(item => ({
+                x: new Date(item.date).toLocaleDateString('en-US'),
+                y: item.macd_line,
+              })),
+              borderColor: 'rgba(255, 0, 0, 1)',
+              fill: false,
+              pointRadius: 2,
+            },
+            {
+              label: `${company} - Twelve Days EMA`,
+              data: companyStocks.map(item => ({
+                x: new Date(item.date).toLocaleDateString('en-US'),
+                y: item.twelve_days_ema,
+              })),
+              borderColor: 'rgba(0, 255, 0, 1)',
+              fill: false,
+              pointRadius: 2,
+            },
+            {
+              label: `${company} - Twenty Six Days EMA`,
+              data: companyStocks.map(item => ({
+                x: new Date(item.date).toLocaleDateString('en-US'),
+                y: item.twenty_six_days_ema,
+              })),
+              borderColor: 'rgba(0, 0, 255, 1)',
+              fill: false,
+              pointRadius: 2,
+            },
+          ]
+        ),
+      };
+    });
+
     const chartData = {
-      labels: data.map(item => item.date),
-      datasets: [{
-        label: selectedStock,
-        data: data.map(item => item.close),
-        borderColor: 'rgba(33, 150, 243, 1)',
-        fill: false,
-      }]
+      datasets: companyData.reduce((acc, curr) => [...acc, ...curr.datasets], []),
     };
 
-    return <Line data={chartData} />;
-  }
+    const options = {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day',
+            parser: 'MM/DD/YYYY',
+            tooltipFormat: 'll',
+          },
+        },
+        y: {
+          beginAtZero: false,
+        },
+      },
+    };
+
+    return <Line data={chartData} options={options} />;
+  };
 
   return (
     <Container maxWidth="lg">
@@ -43,13 +141,21 @@ export default function BloombergTerminal() {
         <Typography variant="h4" gutterBottom>
           Bloomberg Terminal
         </Typography>
+        <TextField
+          fullWidth
+          label="Search for stock"
+          variant="outlined"
+          value={selectedStock}
+          onChange={(e) => setSelectedStock(e.target.value)}
+          sx={{ mb: 2 }}
+        />
         <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="stock-label">Select Stock</InputLabel>
+          <InputLabel id="stock-label">Select Method</InputLabel>
           <Select
             labelId="stock-label"
             id="stock-select"
-            value={selectedStock}
-            onChange={(e) => setSelectedStock(e.target.value)}
+            value={selectedMethod}
+            onChange={(e) => setSelectedMethod(e.target.value)}
             label="Select Stock"
           >
             <MenuItem value="Bollinger Bands">Bollinger Bands</MenuItem>

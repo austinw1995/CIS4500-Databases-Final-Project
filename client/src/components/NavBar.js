@@ -41,7 +41,7 @@ export default function NavBar() {
           <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}> {/* Space out the links */}
             <NavText href='/' text='Home' />
             <NavText href='/stats' text='Basic Stats' />
-            <NavText href='/sp' text='S&P 500 Stock Queries' />
+            {/*<NavText href='/sp' text='S&P 500 Stock Queries' />*/}
             <NavText href='/exchange' text='Stock Exchange Trends' />
             <NavText href='/comparisons' text='Stock/Index Comparisons' />
             <NavText href='/bloomberg' text='Bloomberg Terminal' />
