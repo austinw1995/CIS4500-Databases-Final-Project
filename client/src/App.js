@@ -9,7 +9,9 @@ import SP from './pages/S&P';
 import BasicStats from './pages/BasicStats';
 import Exchange from './pages/Exchange'
 import Comparisons from './pages/Comparisons'
+import Bloomberg from './pages/Bloomberg'
 import Indexes from './pages/Indexes'
+
 
 // createTheme enables you to customize the look and feel of your app past the default
 // in this case, we only change the color scheme
@@ -36,7 +38,9 @@ export default function App() {
           <Route path="/exchange" element={<Exchange />} />
           <Route path="/stats" element={<BasicStats />} />
           <Route path="/comparisons" element={<Comparisons />} />
+          <Route path="/bloomberg" element={<Bloomberg />} />
           <Route path="/indexes" element={<Indexes />} />
+
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

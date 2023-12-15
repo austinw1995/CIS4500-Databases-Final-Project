@@ -384,36 +384,34 @@ const stock_index_corr = async function (req, res) {
 const stock_index_comparison = async function (req, res) {
   //Compare and contrast the performance of selected S&P 500 stocks with selected indices
   //HSI', 'NYA', 'N100', 'NSEI
-  let companies = req.params.stocks;
-  //const companiesArray = companies.split(',');
-  let inds = req.params.indexes;
-  //const indsArray = inds.split(',');
+  let companies = req.query.stocks;
+  const companiesArray = companies.split(', ');
+  let inds = req.query.indexes;
+  let indexesArray = inds.split(', ');
   connection.query(`WITH StockReturns AS (
     SELECT
         date,
-        name AS stock_ticker,
-        (close - LAG(close) OVER (PARTITION BY name ORDER BY date)) / LAG(close) OVER (PARTITION BY name ORDER BY date) AS stock_return
+        name AS ticker,
+        (close - LAG(close) OVER (PARTITION BY name ORDER BY date)) / LAG(close) OVER (PARTITION BY name ORDER BY date) AS returns
     FROM Stocks_Cor
-    WHERE name = '${companies}'
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
 ),
 IndexReturns AS (
     SELECT
         date,
-        marketIndex AS index_ticker,
-        (closeUSD - LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date)) / LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date) AS index_return
+        marketIndex AS ticker,
+        (closeUSD - LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date)) / LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date) AS returns
     FROM Markets_Cor2
-    WHERE marketIndex = '${inds}' AND date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE marketIndex IN (${indexesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
 )
-SELECT
-    sr.date,
-    sr.stock_ticker,
-    sr.stock_return,
-    ir.index_ticker,
-    ir.index_return
+SELECT sr.date, sr.ticker AS ticker, sr.returns
 FROM StockReturns sr
-JOIN IndexReturns ir ON sr.date = ir.date
-WHERE sr.stock_return IS NOT NULL AND ir.index_return IS NOT NULL
-ORDER BY sr.date;`,
+WHERE sr.returns IS NOT NULL
+UNION
+SELECT ir.date, ir.ticker AS ticker, ir.returns
+FROM IndexReturns ir
+WHERE ir.returns IS NOT NULL
+ORDER BY date;`,
     (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
@@ -428,17 +426,17 @@ ORDER BY sr.date;`,
 const index_vs_stock_mean_comp = async function (req, res) {
   //Query to take the mean of selected stocks and compare with selected indices 
   //to see how a batch of stocks have performed in comparison to the overall market performance of particular markets.
-  let companies = req.params.stocks;
-  //const companiesArray = companies.split(',');
-  let inds = req.params.indexes;
-  //const indsArray = inds.split(',');
+  let companies = req.query.stocks;
+  const companiesArray = companies.split(', ');
+  let inds = req.query.indexes;
+  let indexesArray = inds.split(', ');
   connection.query(`WITH StockReturns AS (
     SELECT
         date,
         name AS stock_ticker,
         (close - LAG(close) OVER (PARTITION BY name ORDER BY date)) / LAG(close) OVER (PARTITION BY name ORDER BY date) AS stock_return
     FROM Stocks_Cor
-    WHERE name = '${companies}'
+    WHERE name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
 ),
 IndexReturns AS (
     SELECT
@@ -446,7 +444,7 @@ IndexReturns AS (
         marketIndex AS index_ticker,
         (closeUSD - LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date)) / LAG(closeUSD) OVER (PARTITION BY marketIndex ORDER BY date) AS index_return
     FROM Markets_Cor2
-    WHERE marketIndex = '${inds}' AND date BETWEEN '2013-02-08' AND '2018-02-07'
+    WHERE marketIndex IN (${indexesArray.map(comp => `'${comp}'`).join(',')}) AND date BETWEEN '2013-02-08' AND '2018-02-07'
 )
 SELECT
     AVG(sr.stock_return) AS avg_daily_stock_return,
@@ -512,55 +510,40 @@ const rel_strength = async function (req, res) {
 
 // next
 const bol_bands = async function (req, res) {
-  //Calculates the relative strength index of selected stocks, and ranks them in descending order
-  let companies = req.params.stocks;
-  const companiesArray = companies.split(',');
-  connection.query(`WITH StockPriceChanges AS (
+  let company = req.query.stock;
+  const startdate = req.query.start_date || '2013-02-08';
+  const enddate = req.query.end_date || '2018-02-07';
+  connection.query(`
     SELECT
         name,
         date,
-        close - LAG(close) OVER (PARTITION BY name ORDER BY date) AS price_change
+        AVG(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
+        AVG(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) + 
+        2 * STDDEV(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
+        AVG(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) - 
+        2 * STDDEV(close) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band
     FROM
         Stocks_Cor
     WHERE
-        name IN (${companiesArray.map(comp => `'${comp}'`).join(',')})
-        AND date BETWEEN '2014-02-07' AND '2018-02-07'
-),
-BollingerBands AS (
-    SELECT
-        name,
-        date,
-        AVG(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS moving_avg,
-        2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS upper_band,
-        -2 * STDDEV(price_change) OVER (PARTITION BY name ORDER BY date ROWS BETWEEN 20 PRECEDING AND CURRENT ROW) AS lower_band
-    FROM
-        StockPriceChanges
-)
-SELECT
-    name,
-    date,
-    moving_avg,
-    upper_band,
-    lower_band
-FROM
-    BollingerBands
-ORDER BY
-    name, date;`,
-    (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data);
-      }
-    });
+        name = '${company}' AND date BETWEEN '${startdate}' AND '${enddate}'
+    ORDER BY
+        name, date;
+  `, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
 }
 
-// next
 const macd = async function (req, res) {
   //Calculates the relative strength index of selected stocks, and ranks them in descending order
   let companies = req.params.stocks;
   const companiesArray = companies.split(',');
+  const start_date = req.params.start_date;
+  const end_date = req.params.end_date;
   connection.query(`WITH StockPriceChanges AS (
     SELECT
         name,

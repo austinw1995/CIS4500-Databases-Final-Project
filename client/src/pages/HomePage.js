@@ -46,9 +46,11 @@ const HomePage = () => {
   const Logo = () => (
     <svg width="100" height="50" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
       <text x="5" y="30" fontFamily="Arial, sans-serif" fontSize="30" fill="#1976d2">ST</text>
-      <path d="M80 35 l10 -10 m-10 10 l-10 -10 m10 10 v-30" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
+      <path d="M45 30 L70 10" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
+      <polyline points="62,10 70,10 70,18" stroke="#1976d2" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
+  
 
   return (
     <Container>
