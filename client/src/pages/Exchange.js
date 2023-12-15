@@ -213,7 +213,7 @@ export default function StockExchangeIndexQueries() {
           </pre>
         )}
         */}
-        {data && renderLineChart()};
+        {data && renderLineChart()}
       </div>
       <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
         <InputLabel>Select Calculations</InputLabel>
