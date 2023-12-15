@@ -11,6 +11,7 @@ import Exchange from './pages/Exchange'
 import Comparisons from './pages/Comparisons'
 import Bloomberg from './pages/Bloomberg'
 import Indexes from './pages/Indexes'
+import Livedata from './pages/Livedata'
 
 
 // createTheme enables you to customize the look and feel of your app past the default
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/comparisons" element={<Comparisons />} />
           <Route path="/bloomberg" element={<Bloomberg />} />
           <Route path="/indexes" element={<Indexes />} />
+          <Route path="/livedata" element={<Livedata />} />
 
         </Routes>
       </BrowserRouter>

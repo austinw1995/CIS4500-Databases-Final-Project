@@ -1,7 +1,9 @@
 import React from 'react';
 import { Container, Typography, Box, Paper } from '@mui/material';
 import LazyTable from '../components/LazyTable';
+import Livedata from './Livedata';
 const config = require('../config.json');
+
 const singlePctChangeColumns = [
   {
     field: 'name',
