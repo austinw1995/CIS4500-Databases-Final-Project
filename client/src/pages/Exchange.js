@@ -215,6 +215,9 @@ export default function StockExchangeIndexQueries() {
         */}
         {data && renderLineChart()}
       </div>
+      <Typography variant="h4" gutterBottom>
+        Analysis
+      </Typography>
       <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
         <InputLabel>Select Calculations</InputLabel>
         <Select
