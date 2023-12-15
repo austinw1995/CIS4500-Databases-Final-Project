@@ -1,5 +1,45 @@
 import React from 'react';
 import { Container, Typography, Box, Paper } from '@mui/material';
+import LazyTable from '../components/LazyTable';
+const config = require('../config.json');
+const singlePctChangeColumns = [
+  {
+    field: 'name',
+    headerName: 'Stock Ticker',
+  },
+  {
+    field: 'pct_change',
+    headerName: 'Percent Change'
+  },
+];
+
+function getRandomDate() {
+  // Set the start and end dates
+  const startDate = new Date('2013-02-08');
+  const endDate = new Date('2018-02-07');
+
+  // Calculate the difference in milliseconds between the start and end dates
+  const dateDifference = endDate.getTime() - startDate.getTime();
+
+  // Generate a random number within the date range
+  const randomTime = startDate.getTime() + Math.random() * dateDifference;
+
+  // Create a new date object with the random time
+  const randomDate = new Date(randomTime);
+
+  // Format the date to 'YYYY-MM-DD'
+  const formattedDate =
+    randomDate.getFullYear() +
+    '-' +
+    String(randomDate.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(randomDate.getDate()).padStart(2, '0');
+
+  return formattedDate;
+}
+
+const randomDate = getRandomDate();
+console.log(randomDate);
 
 const HomePage = () => {
   // Adjusted Trending Up Arrow SVG as a logo
@@ -20,7 +60,7 @@ const HomePage = () => {
           <Logo />
         </Box>
         {/* Application Name */}
-        <Typography variant="h4" gutterBottom color="textPrimary" mb = {5}>
+        <Typography variant="h4" gutterBottom color="textPrimary" mb={5}>
           Stock Trends
         </Typography>
         {/* Paragraph description */}
@@ -29,10 +69,15 @@ const HomePage = () => {
             Welcome to Stock Trends! Use the navigation bar at the top to get started. Discover historical trends and glean insights from stock and index performances between 2013 and 2018 with Stock Trends. Delve into a period of economic recovery and analyze market dynamics that parallel our current financial landscape.
           </Typography>
         </Paper>
-        {/* Trend line image placeholder */}
-        <Box sx={{ width: '100%', overflow: 'hidden', marginBottom: 3 }}>
-          <img src="path_to_your_trend_line_image.jpg" alt="Stock Returns Trend Line" style={{ width: '100%', height: 'auto' }} />
-        </Box>
+        <Typography variant="body1">
+          Here are today's ({randomDate}) top 10 biggest gainers and losers:
+        </Typography>
+        <LazyTable
+          route={`http://${config.server_host}:${config.server_port}/single_day_pct`
+            + `?start_date=${randomDate}`}
+          columns={singlePctChangeColumns}
+          defaultPageSize={1} rowsPerPageOptions={[10]}
+        />
       </Box>
     </Container>
   );
