@@ -122,7 +122,7 @@ export default function IndexQueries() {
           </pre>
         )}
         */}
-        {data && renderLineChart()};
+        {data && renderLineChart()}
       </div>
     </Container>
   );

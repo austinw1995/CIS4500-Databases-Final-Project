@@ -17,7 +17,7 @@ export default function StockIndexComparison() {
 
   const handleSearch = () => {
     // Add logic to handle the search based on the user's input
-    console.log('Fetching data for indexes:', selectedIndexes, 'from:', startDate, 'to:', endDate);
+    console.log('Fetching data for indexes:', selectedIndexes, '. Fetching data for stocks:', selectedStocks);
     // Fetch data and update 'data' state
     fetch(`http://${config.server_host}:${config.server_port}/stock_index_comparison/?indexes=${selectedIndexes}` +
       `&stocks=${selectedStocks}`
@@ -33,35 +33,22 @@ export default function StockIndexComparison() {
   const renderLineChart = () => {
     if (!data) return null;
 
-    const indexNames = [...new Set(data.map(item => item.marketIndex))];
-    const indexData = indexNames.map(index => {
-      const indexes = data.filter(item => item.marketIndex === index);
+    const tickerNames = [...new Set(data.map(item => item.ticker))];
+    const tickerData = tickerNames.map(identifier => {
+      const identifierData = data.filter(item => item.ticker === identifier);
       return {
-        label: index,
-        data: indexes.map(item => ({
+        label: identifier,
+        data: identifierData.map(item => ({
           x: new Date(item.date).toLocaleDateString('en-US'),
-          y: item.closeUSD,
+          y: item.returns,
         })),
       };
     });
-
-    const companyNames = [...new Set(data.map(item => item.name))];
-    const companyData = companyNames.map(company => {
-      const companyStocks = data.filter(item => item.name === company);
-      return {
-        label: company,
-        data: companyStocks.map(item => ({
-          x: new Date(item.date).toLocaleDateString('en-US'),
-          y: item.close,
-        })),
-      };
-    });
-
-    const combinedData = [...indexData, ...companyData];
 
     const chartData = {
-      datasets: combinedData.map(dataset => ({
-        ...dataset,
+      datasets: tickerData.map((index, idx) => ({
+        label: index.label,
+        data: index.data,
         borderColor: `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`, // Random color
         fill: false,
       })),
@@ -144,7 +131,7 @@ export default function StockIndexComparison() {
           </pre>
         )}
         */}
-        {data && renderLineChart()};
+        {data && renderLineChart()}
       </div>
     </Container>
   );
