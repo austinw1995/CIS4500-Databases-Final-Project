@@ -3,6 +3,8 @@ import {
   Container, TextField, FormControl, InputLabel, Select, MenuItem, Button,
   Box, Typography
 } from '@mui/material';
+import { TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Paper } from '@mui/material';
+
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import 'chartjs-adapter-moment';
@@ -22,7 +24,8 @@ export default function StockExchangeIndexQueries() {
 
   const handleSearch = () => {
     // Add logic to handle the search based on the user's input
-    console.log('Fetching data for stocks:', searchQuery, 'from:', startDate, 'to:', endDate);
+    console.log('Fetching data for stocks:', searchQuery);
+    console.log('from:', startDate, 'to:', endDate);
     // Fetch data and update 'data' state
     fetch(`http://${config.server_host}:${config.server_port}/stock/?stocks=${searchQuery}` +
       `&start_date=${startDate}&end_date=${endDate}`
@@ -36,6 +39,7 @@ export default function StockExchangeIndexQueries() {
 
   const handleCalculate = () => {
     console.log('Calculating:', selectedCalculations, 'for stocks:', searchQueryCalculate);
+    console.log('from:', startDateCalculate, 'to:', endDateCalculate);
     // Fetch data and update 'calculationResults' state
     // Create an array to store all the fetch promises
     const fetchPromises = [];
@@ -82,22 +86,36 @@ export default function StockExchangeIndexQueries() {
     const calculationTypes = Object.keys(calculationResults);
 
     return (
-      <table>
-        <thead>
-          <tr>
-            <th>Calculation Type</th>
-            <th>Results</th>
-          </tr>
-        </thead>
-        <tbody>
-          {calculationTypes.map((calculationType, index) => (
-            <tr key={index}>
-              <td>{calculationType}</td>
-              <td>{JSON.stringify(calculationResults[calculationType], null, 2)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableBody>
+            {calculationTypes.map((calculationType, index) => (
+              <TableRow key={index}>
+                <TableCell>{calculationType}</TableCell>
+                <TableCell>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Results</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {calculationResults[calculationType].map((result, resultIndex) => (
+                        <TableRow key={resultIndex}>
+                          <TableCell>{result.name}</TableCell>
+                          <TableCell>{result.rsi}</TableCell>
+                          <TableCell>{result.one_year_cumulative_return}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
   };
 

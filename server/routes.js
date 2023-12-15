@@ -463,7 +463,9 @@ const rel_strength = async function (req, res) {
   const companiesArray = companies.split(', ');
   const formattedCompanies = companiesArray.map(comp => `'${comp}'`).join(',');
   const startdate = req.query.start_date || '2013-02-08';
+  console.log(startdate);
   const enddate = req.query.end_date || '2018-02-07';
+  console.log(enddate);
   connection.query(`WITH SELECTED_STOCKS AS (
     SELECT name, date, close
     FROM Stocks_Cor
