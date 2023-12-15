@@ -172,7 +172,7 @@ export default function StockExchangeIndexQueries() {
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Stock Exchange Trends
+          Individual Stock Trends
         </Typography>
         <TextField
           fullWidth
