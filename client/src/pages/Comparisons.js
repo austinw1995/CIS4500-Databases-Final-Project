@@ -16,6 +16,7 @@ export default function StockIndexComparison() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [data, setData] = useState(null);
+  const [averageStocks, setAverageStocks] = useState('');
 
   const [selectedIndexesCalculate, setSelectedIndexesCalculate] = useState('');
   const [searchQueryCalculate, setSearchQueryCalculate] = useState('');
@@ -24,18 +25,35 @@ export default function StockIndexComparison() {
   const [selectedCalculations, setSelectedCalculations] = useState([]);
   const [calculationResults, setCalculationResults] = useState(null);
 
+  const handleSelectChange = (event) => {
+    setAverageStocks(event.target.value);
+  };
+
   const handleSearch = () => {
     // Add logic to handle the search based on the user's input
     console.log('Fetching data for indexes:', selectedIndexes, '. Fetching data for stocks:', selectedStocks);
     // Fetch data and update 'data' state
-    fetch(`http://${config.server_host}:${config.server_port}/stock_index_comparison/?indexes=${selectedIndexes}` +
-      `&stocks=${selectedStocks}`
-    )
-      .then(res => res.json())
-      .then(resJson => {
-        console.log('Fetched data:', resJson);
-        setData(resJson);
-      });
+    if (averageStocks === "no") {
+      fetch(`http://${config.server_host}:${config.server_port}/stock_index_comparison/?indexes=${selectedIndexes}` +
+        `&stocks=${selectedStocks}`
+      )
+        .then(res => res.json())
+        .then(resJson => {
+          console.log('Fetched data:', resJson);
+          setData(resJson);
+        });
+    }
+    else {
+      fetch(`http://${config.server_host}:${config.server_port}/stock_index_mean_comp/?indexes=${selectedIndexes}` +
+        `&stocks=${selectedStocks}`
+      )
+        .then(res => res.json())
+        .then(resJson => {
+          console.log('Fetched data:', resJson);
+          setData(resJson);
+        });
+    }
+
   };
 
   const handleCalculate = () => {
@@ -134,7 +152,7 @@ export default function StockIndexComparison() {
         label: identifier,
         data: identifierData.map(item => ({
           x: new Date(item.date).toLocaleDateString('en-US'),
-          y: item.returns,
+          y: item.close,
         })),
       };
     });
@@ -194,24 +212,20 @@ export default function StockIndexComparison() {
           onChange={(e) => setSelectedStocks(e.target.value)}
           sx={{ mb: 2 }}
         />
-        <TextField
-          type="date"
-          label="Start Date"
-          InputLabelProps={{ shrink: true }}
-          variant="outlined"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          sx={{ mb: 2, width: '50%' }}
-        />
-        <TextField
-          type="date"
-          label="End Date"
-          InputLabelProps={{ shrink: true }}
-          variant="outlined"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          sx={{ mb: 2, width: '50%' }}
-        />
+        <FormControl>
+          <InputLabel id="average-label">Average the selected stocks?</InputLabel>
+          <Select
+            labelId="average-label"
+            id="average"
+            value={averageStocks}
+            onChange={handleSelectChange}
+            label="Select Average"
+            sx={{ mr: 50, width: '100%' }}
+          >
+            <MenuItem value="yes">Yes</MenuItem>
+            <MenuItem value="no">No</MenuItem>
+          </Select>
+        </FormControl>
         <Button variant="contained" color="primary" onClick={() => handleSearch()}>
           Go
         </Button>

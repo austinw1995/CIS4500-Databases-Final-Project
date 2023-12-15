@@ -15,7 +15,7 @@ export default function SP500StockQueries() {
 
   return (
     <Container maxWidth="lg">
-      <Typography variant="h4" gutterBottom sx={{ mb: 2, mt: 5}}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 2, mt: 5 }}>
         S&P 500 Stock Queries
       </Typography>
       <Box sx={{ my: 4 }}>
