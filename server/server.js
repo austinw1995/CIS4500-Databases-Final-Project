@@ -28,7 +28,6 @@ app.get('/alphavantage_data', async (req, res) => {
   try {
     const apiUrl = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=DIA&apikey=A26ZCS4SYYRZWJS0';
     const response = await axios.get(apiUrl);
-    console.log(response.data);
     res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
