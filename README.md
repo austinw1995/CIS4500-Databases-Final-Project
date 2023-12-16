@@ -8,3 +8,76 @@ Team: Ashish Pothireddy, Austin Wang, Noah Erdogan, Alex Huang
 ## Chosen Datasets: 
 - Stock Exchange Data (https://www.kaggle.com/datasets/mattiuzc/stock-exchange-data?select=indexData.csv), the dataset contains performance data on 14 different major stock indices inducing the NYSE and NASDAQ, from 1965 to 2021. This dataset notably does not provide the S&P500 index, allowing us to further the complexity of our project by artificially creating the S&P500 index with our other dataset. The dataset contains 3 separate files, but we’ll be focusing on the index_processed.csv file, which is 10 mB. The file contains 9 attributes: a ticker for the index, date of observation, the open, the high, the low, the close, the close adjusted for dividends and stock splits, the total trading volume, and the closeUSD.
 - S&P 500 Stock Data (https://www.kaggle.com/datasets/camnugent/sandp500), the data set contains 2013-2018 historical stock prices for all companies in the S&P 500 index. The table is 29.58 MB, contains 7 attributes, namely date, open, high, low, close, volume, and ticker name, and has 619040 rows. 
+
+## List of Frontend Dependencies: 
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@mui/material": "^5.11.1",
+    "@mui/x-data-grid": "^5.17.17",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "chart.js": "^4.4.1",
+    "chartjs-adapter-moment": "^1.0.1",
+    "moment": "^2.29.4",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.6.1",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.2.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
+## List of Backend Dependencies: 
+{
+  "name": "server",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "mysql": "^2.18.1",
+    "nodemon": "^2.0.20",
+    "request": "^2.88.2",
+    "supertest": "^6.3.3"
+  },
+  "devDependencies": {
+    "jest": "^29.3.1"
+  }
+}
+

@@ -98,7 +98,7 @@ const HomePage = () => {
         </Box>
         {/* Application Name */}
         <Typography variant="h4" gutterBottom color="textPrimary" mb={5}>
-          Stock Trends
+          Market Mosaic
         </Typography>
         {/* Paragraph description */}
         <Paper elevation={3} sx={{ padding: 2, maxWidth: '100%', textAlign: 'left', marginBottom: 3 }}>

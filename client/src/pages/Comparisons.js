@@ -107,6 +107,7 @@ export default function StockIndexComparison() {
     // Extract keys (calculation types) from the combined results
     const calculationTypes = Object.keys(calculationResults);
 
+
     return (
       <TableContainer component={Paper}>
         <Table>
@@ -126,8 +127,19 @@ export default function StockIndexComparison() {
                       {calculationResults[calculationType].map((result, resultIndex) => (
                         <TableRow key={resultIndex}>
                           {calculationType !== 'stock_index_corr' && <TableCell>{result.name}</TableCell>}
-                          <TableCell>{result.beta}</TableCell>
-                          <TableCell>{result.correlation}</TableCell>
+                          <TableCell>
+                            {calculationType === 'stock_index_corr' ? (
+                              // Render specific content for stock_index_corr
+                              <div>
+                                <div>Correlation: {result.correlation}</div>
+                              </div>
+                            ) : (
+                              // Render content for other calculation types
+                              <div>
+                                <div>Beta: {result.beta}</div>
+                              </div>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
