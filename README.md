@@ -109,3 +109,6 @@ Password: twins111
 Port: 3306
 To access the database in DataGrip, fill in the following information, and then open a query console and type USE FINAL_PROJECT;.
 
+## File organization:
+Frontend code is in client folder. Backend code is in server folder. Data preprocessing and ingestion code is in data_preprocessing_ingestion folder.
+
