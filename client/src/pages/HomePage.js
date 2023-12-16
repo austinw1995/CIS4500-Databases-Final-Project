@@ -80,9 +80,9 @@ const HomePage = () => {
   const yearsAgoString = getYearsAgoString(randomYear);
   const Logo = () => (
     <svg width="100" height="50" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <text x="5" y="30" fontFamily="Arial, sans-serif" fontSize="30" fill="#1976d2">ST</text>
-      <path d="M45 30 L70 10" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
-      <polyline points="62,10 70,10 70,18" stroke="#1976d2" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <text x="5" y="30" fontFamily="Arial, sans-serif" fontSize="30" fill="#1976d2">MM</text>
+      <path d="M57 30 L82 10" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" />
+      <polyline points="74,10 82,10 82,18" stroke="#1976d2" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
   const today = new Date();
@@ -103,7 +103,7 @@ const HomePage = () => {
         {/* Paragraph description */}
         <Paper elevation={3} sx={{ padding: 2, maxWidth: '100%', textAlign: 'left', marginBottom: 3 }}>
           <Typography variant="body1">
-            Welcome to Stock Trends! Use the navigation bar at the top to get started. Discover historical trends and glean insights from stock and index performances between 2013 and 2018 with Stock Trends. Delve into a period of economic recovery and analyze market dynamics that parallel our current financial landscape.
+            Welcome to Market Mosaic! Use the navigation bar at the top to get started. Discover historical trends and glean insights from stock and index performances between 2013 and 2018 with Stock Trends. Delve into a period of economic recovery and analyze market dynamics that parallel our current financial landscape.
           </Typography>
         </Paper>
         <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
