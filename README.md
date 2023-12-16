@@ -100,3 +100,12 @@ npm test
   }
 }
 
+## Database RDS Information:
+We created an AWS RDS mySQL instance as demonstrated in the HW1 handout. We connected the instance via DataGrip using the following information:
+Database Name: finalproject.cvfdrw5olghe.us-east-2.rds.amazonaws.com
+Host: finalproject.cvfdrw5olghe.us-east-2.rds.amazonaws.com
+User: austinw1995
+Password: twins111
+Port: 3306
+To access the database in DataGrip, fill in the following information, and then open a query console and type USE FINAL_PROJECT;.
+
