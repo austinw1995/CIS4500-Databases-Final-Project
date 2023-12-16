@@ -9,6 +9,25 @@ Team: Ashish Pothireddy, Austin Wang, Noah Erdogan, Alex Huang
 - Stock Exchange Data (https://www.kaggle.com/datasets/mattiuzc/stock-exchange-data?select=indexData.csv), the dataset contains performance data on 14 different major stock indices inducing the NYSE and NASDAQ, from 1965 to 2021. This dataset notably does not provide the S&P500 index, allowing us to further the complexity of our project by artificially creating the S&P500 index with our other dataset. The dataset contains 3 separate files, but we’ll be focusing on the index_processed.csv file, which is 10 mB. The file contains 9 attributes: a ticker for the index, date of observation, the open, the high, the low, the close, the close adjusted for dividends and stock splits, the total trading volume, and the closeUSD.
 - S&P 500 Stock Data (https://www.kaggle.com/datasets/camnugent/sandp500), the data set contains 2013-2018 historical stock prices for all companies in the S&P 500 index. The table is 29.58 MB, contains 7 attributes, namely date, open, high, low, close, volume, and ticker name, and has 619040 rows. 
 
+## How to run our project locally:
+Clone our repo from our main github branch. 
+Frontend installations should be done in the client directory. The list of dependencies of the frontend are listed below, and belong in a package.json file within this directory. 
+Backend installations should be done in the server directory. The list of dependencies of the backend are listed below, and belong in a package.json file within this directory. 
+
+To build the frontend: 
+cd client
+npm install
+npm start
+
+To build the backend:
+cd server
+npm install
+npm start
+
+To run backend tests:
+cd server
+npm test
+
 ## List of Frontend Dependencies: 
 {
   "name": "client",
