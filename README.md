@@ -1,5 +1,5 @@
 # CIS4500-Final-Project
-Team: Ashish Pothireddy, Austin Wang, Noah Erdogan, Alex Huang
+Team: Austin Wang, Ashish Pothireddy, Noah Erdogan, Alex Huang
 
 ## Application Description: 
 - Our application aims to provide users with a comprehensive understanding of stocks’ and indices’ performances over time, with a specific focus on the 2013-2018 period. The 2013-2018 period holds several key similarities to the present, which makes it an interesting project for us to undertake. Namely, the 2013-2018 period was part of the global economic recovery from the 2008 Financial Crisis, and we similarly are in the recovery period from the COVID recession. There were also contrasting market dynamics and governmental policies in the 2013-2018 period with significant bull and bear runs and ever-shifting monetary/fiscal policies, which is very similar to the economic market we are currently in. As such, we believe the analysis that can be produced from this project has significant implications for our present. 
